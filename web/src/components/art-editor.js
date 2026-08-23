@@ -71,9 +71,10 @@ export class ArtEditor extends EditorElement {
       // The list is worth more than it was. art-page.js sizes the Bandcamp frame
       // from `tracks.length` — it is the only count the page has, and Bandcamp
       // stretches its list to whatever height it is given — so a record with
-      // tracks gets the player's list at exactly its own height and a record
-      // without gets the player's header alone. Nothing here can put them in
-      // yet; that needs the repeatable rows this form used to carry.
+      // tracks gets the player's list at five rows or its own length, whichever
+      // is shorter, and a record without gets the player's header alone.
+      // Nothing here can put them in yet; that needs the repeatable rows this
+      // form used to carry.
     };
 
     const art = inject(ART);

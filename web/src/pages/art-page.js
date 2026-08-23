@@ -36,15 +36,21 @@ const PLAYER_SKIN = {
  * and scrolls internally past it, so the player never shrinks to its own
  * content: one fixed height is right for one record and wrong for every other.
  * The old 460px was right for none of them — an eight-track record left a band
- * of Bandcamp's own white under the last row, and a thirteen-track one put a
- * scrollbar inside a page that already scrolls.
+ * of Bandcamp's own white under the last row.
  *
  * `header` is the title, the credit line and the transport, which is the whole
  * player when there is no track list. `chrome` is that same band plus the
  * list's rules and its scroll gutter, and `row` is one track. 132 + 33n lands
- * within a pixel of the last row's rule from one track upwards.
+ * within a pixel of the row's rule.
+ *
+ * `rows` is the cap. A record is a block on a page of blocks, and a long one
+ * taking six hundred pixels of it pushes the next record off the screen; five
+ * rows is a player rather than a document. Past that the list scrolls, which is
+ * Bandcamp's own behaviour and the reason a height under the content is safe:
+ * the frame is short on purpose, so the scrollbar reads as a list that
+ * continues rather than as a box that was measured wrong.
  */
-const PLAYER_SIZE = { header: 122, chrome: 132, row: 33 };
+const PLAYER_SIZE = { header: 122, chrome: 132, row: 33, rows: 5 };
 
 /** No row has this id, so it is the one that means "the row being added". */
 const NEW_ROW = 0;
@@ -111,8 +117,7 @@ export class ArtPage extends SignalElement {
   /**
    * Whether the player is asked for its track list. Only a record that names
    * its tracks can be given a frame the right height for one, and a list in a
-   * frame of the wrong height is either a white band under the last row or a
-   * scrollbar inside the page's own scroll.
+   * frame of the wrong height is a white band under the last row.
    *
    * @param {ArtWork} work
    */
@@ -121,16 +126,20 @@ export class ArtPage extends SignalElement {
   }
 
   /**
-   * The frame's height in pixels: exactly what the player draws, so it ends on
-   * the last row's rule. Bound as the iframe's `height` attribute rather than
-   * fixed in the stylesheet, which is what let one number stand for every
-   * record. Width stays 100% — the frame is still fluid, only its height is
-   * told what the content is.
+   * The frame's height in pixels: the track list's own height up to five rows,
+   * so a short record ends on its last rule and a long one ends on a fifth row
+   * with the rest under Bandcamp's scroll. Never a height between rows — that
+   * is the half-row that makes a list look clipped rather than continued.
+   *
+   * Bound as the iframe's `height` attribute rather than fixed in the
+   * stylesheet, which is what let one number stand for every record. Width
+   * stays 100%: the frame is still fluid, only its height is told what the
+   * content is.
    *
    * @param {ArtWork} work
    */
   embedHeight(work) {
-    const tracks = work.tracks.length;
+    const tracks = Math.min(work.tracks.length, PLAYER_SIZE.rows);
     if (tracks === 0) return PLAYER_SIZE.header;
     return PLAYER_SIZE.chrome + PLAYER_SIZE.row * tracks;
   }
