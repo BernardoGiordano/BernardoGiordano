@@ -64,11 +64,16 @@ export class ArtEditor extends EditorElement {
       links: values.links
         .filter((link) => link.url.trim() !== '')
         .map((link) => ({ label: link.label.trim(), url: link.url.trim() })),
-      // `tracks` is deliberately absent. The page no longer draws a tracklist —
-      // the Bandcamp player already names the tracks — so this form no longer
-      // edits one, and a patch that omitted the key by accident would be a patch
-      // that emptied the column. api/ leaves an absent key alone; every row that
-      // still has tracks keeps them.
+      // `tracks` is deliberately absent, and absent is not empty: api/ leaves a
+      // key it was not sent alone, so every row that has tracks keeps them and a
+      // save from this form cannot clear the column by omission.
+      //
+      // The list is worth more than it was. art-page.js sizes the Bandcamp frame
+      // from `tracks.length` — it is the only count the page has, and Bandcamp
+      // stretches its list to whatever height it is given — so a record with
+      // tracks gets the player's list at exactly its own height and a record
+      // without gets the player's header alone. Nothing here can put them in
+      // yet; that needs the repeatable rows this form used to carry.
     };
 
     const art = inject(ART);

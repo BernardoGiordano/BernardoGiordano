@@ -49,16 +49,6 @@ export class ProjectsPage extends SignalElement {
     return this.errorKey.value === '' ? '' : t(this.errorKey.value);
   }
 
-  /** @param {number | null} value */
-  count(value) {
-    return compactNumber(value);
-  }
-
-  /** @param {string | null} iso */
-  when(iso) {
-    return relativeTime(iso);
-  }
-
   /** @param {Project} project */
   downloads(project) {
     return project.downloadsOverride ?? project.stats?.downloads ?? null;
@@ -77,6 +67,12 @@ export class ProjectsPage extends SignalElement {
     if (project.kind !== '') left.push(this.#capitalise(project.kind));
 
     const right = [t(project.openSource ? 'projects.openSource' : 'projects.closedSource')];
+    // Stars lead the numbers. They used to sit inside the star button, where a
+    // count is not what a button is for: the invitation is the same on every
+    // row and the number is not, so the number is a fact and belongs with the
+    // other facts GitHub reported. Zero is left out for the reason a fork count
+    // of zero is — a stat nobody has yet is not a stat.
+    if (project.stats?.stars) right.push(t('projects.starsCount', { count: compactNumber(project.stats.stars) }));
     const downloads = this.downloads(project);
     if (downloads !== null && downloads > 0) {
       right.push(t('projects.downloadsCount', { count: compactNumber(downloads) }));

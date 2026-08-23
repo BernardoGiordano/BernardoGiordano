@@ -68,6 +68,14 @@
                  first does nothing — which is why the star pill sat against the
                  title instead of at the end of the row as soon as edit mode was
                  on. -->
+            <!-- The count is gone from the button and is a fact in the line
+                 below, with the forks and the downloads it belongs beside. It
+                 was doing two jobs badly here: at 55% under a full-strength
+                 label it was the least legible part of the loudest element on
+                 the row, it made every pill a different width so eight of them
+                 ran a ragged edge down the page, and a repository with none
+                 read "Star 0". What is left is one invitation, the same width
+                 on every row. -->
             <div class="ms-auto flex shrink-0 items-center gap-2">
               <a
                 *if="repoUrl(project)"
@@ -76,12 +84,12 @@
                 rel="noopener noreferrer"
                 class="btn btn-primary shrink-0 px-2.5 py-[3px] text-[12px]"
                 [title]="t('projects.starIt')"
+                [aria-label]="t('projects.starIt')"
               >
                 <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path [d]="icon('star')"></path>
                 </svg>
                 {{ t('projects.star') }}
-                <span class="tabular-nums opacity-55">{{ count(project.stats?.stars ?? 0) }}</span>
               </a>
 
               <div *if="canEdit" class="edit-tools">

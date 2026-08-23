@@ -97,11 +97,21 @@
           </p>
 
           <!-- Bandcamp's player, minus its own cover — the one above it is
-               ours — with its track list left on, since that is the one list
-               of the two that this page does not already draw. -->
+               ours. The height comes from the record rather than the
+               stylesheet: the player fills whatever frame it is given and
+               scrolls the rest, so only a height computed from the track count
+               ends on the last row instead of on a band of white. -->
           <div *if="hasEmbed(work)" class="mt-6">
             <div class="release-frame">
-              <iframe [src]="embedUrl(work)" [title]="work.title" class="player-bar" loading="lazy" scrolling="no" seamless></iframe>
+              <iframe
+                [src]="embedUrl(work)"
+                [title]="work.title"
+                [height]="embedHeight(work)"
+                class="player-bar"
+                loading="lazy"
+                scrolling="no"
+                seamless
+              ></iframe>
             </div>
           </div>
         </div>

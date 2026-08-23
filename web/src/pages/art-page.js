@@ -29,6 +29,23 @@ const PLAYER_SKIN = {
   dark: { background: '232532', link: '9184d9' },
 };
 
+/**
+ * The player's geometry, measured off the rendered player rather than guessed.
+ *
+ * Bandcamp stretches its track list to fill whatever height the iframe is given
+ * and scrolls internally past it, so the player never shrinks to its own
+ * content: one fixed height is right for one record and wrong for every other.
+ * The old 460px was right for none of them — an eight-track record left a band
+ * of Bandcamp's own white under the last row, and a thirteen-track one put a
+ * scrollbar inside a page that already scrolls.
+ *
+ * `header` is the title, the credit line and the transport, which is the whole
+ * player when there is no track list. `chrome` is that same band plus the
+ * list's rules and its scroll gutter, and `row` is one track. 132 + 33n lands
+ * within a pixel of the last row's rule from one track upwards.
+ */
+const PLAYER_SIZE = { header: 122, chrome: 132, row: 33 };
+
 /** No row has this id, so it is the one that means "the row being added". */
 const NEW_ROW = 0;
 
@@ -63,10 +80,11 @@ export class ArtPage extends SignalElement {
    *
    * `artwork=none` drops Bandcamp's own cover — the one above it is ours, and a
    * second one a few sizes smaller was never doing anything the first didn't.
-   * `tracklist=true` puts the track list back, in Bandcamp's own player rather
-   * than a second one drawn here in our type: it already has to render one to
-   * seek within, so a copy beside it was one list too many for no player and
-   * two lists for this one.
+   *
+   * `tracklist=true` is asked for only when the record names its tracks, since
+   * that count is the only thing that can size the frame to the list (see
+   * `embedHeight`). Without it Bandcamp draws a list stretched to a height
+   * nobody measured, which is the empty white box this replaces.
    *
    * `transparent=true` lets the page's own ground show through the player rather
    * than have it paint a rectangle a few values off the surface it sits on;
@@ -82,11 +100,39 @@ export class ArtPage extends SignalElement {
   embedUrl(work) {
     if (!/^\d+$/u.test(work.bandcampAlbumId)) return '';
     const skin = resolvedTheme.value === 'dark' ? PLAYER_SKIN.dark : PLAYER_SKIN.light;
+    const tracklist = this.hasTracklist(work) ? 'tracklist=true/' : '';
     const url = new URL(
-      `/EmbeddedPlayer/album=${work.bandcampAlbumId}/size=large/bgcol=${skin.background}/linkcol=${skin.link}/tracklist=true/artwork=none/transparent=true/`,
+      `/EmbeddedPlayer/album=${work.bandcampAlbumId}/size=large/bgcol=${skin.background}/linkcol=${skin.link}/${tracklist}artwork=none/transparent=true/`,
       BANDCAMP_ORIGIN,
     );
     return bypassSecurityTrustResourceUrl(url.href);
+  }
+
+  /**
+   * Whether the player is asked for its track list. Only a record that names
+   * its tracks can be given a frame the right height for one, and a list in a
+   * frame of the wrong height is either a white band under the last row or a
+   * scrollbar inside the page's own scroll.
+   *
+   * @param {ArtWork} work
+   */
+  hasTracklist(work) {
+    return work.tracks.length > 0;
+  }
+
+  /**
+   * The frame's height in pixels: exactly what the player draws, so it ends on
+   * the last row's rule. Bound as the iframe's `height` attribute rather than
+   * fixed in the stylesheet, which is what let one number stand for every
+   * record. Width stays 100% — the frame is still fluid, only its height is
+   * told what the content is.
+   *
+   * @param {ArtWork} work
+   */
+  embedHeight(work) {
+    const tracks = work.tracks.length;
+    if (tracks === 0) return PLAYER_SIZE.header;
+    return PLAYER_SIZE.chrome + PLAYER_SIZE.row * tracks;
   }
 
   /**

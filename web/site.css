@@ -423,13 +423,15 @@ h1.display,
 /* ── A release ────────────────────────────────────────────────────────────
    The cover is ours, at a size worth looking at; the transport and the track
    list are Bandcamp's, since it already has to draw a list to seek within.
-   `size=large` with `artwork=none` and `tracklist=true` is that player without
-   its own cover — no second one arguing with ours above it.
+   `size=large` with `artwork=none` is that player without its own cover — no
+   second one arguing with ours above it.
 
-   Bandcamp sizes the track list to fill whatever height the iframe is given,
-   scrolling internally past it, so 460px is a fixed pick rather than a
-   measurement: room for a typical eight- or nine-track record before its own
-   list takes over the scrolling.
+   No height here. Bandcamp sizes its track list to fill whatever height the
+   iframe is given and scrolls internally past it, so a height set once in the
+   stylesheet is right for one record and wrong for the rest: it was 460px, and
+   an eight-track record spent the last 70 of them on the player's own white.
+   art-page.js computes the height from the track count and binds it as the
+   iframe's `height` attribute, which is why nothing may override it here.
 
    The player's own layout tops out at 700px wide and does not stretch past
    it — an iframe wider than that shows its plain white body in the leftover
@@ -448,7 +450,6 @@ h1.display,
   border: 0;
   border-radius: var(--site-radius);
   display: block;
-  height: 460px;
   overflow: hidden;
   width: 100%;
 }

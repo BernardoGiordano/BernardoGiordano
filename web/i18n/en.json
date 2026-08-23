@@ -55,6 +55,7 @@
     "totalStars": "stars",
     "totalDownloads": "downloads",
     "more": "More repositories on GitHub",
+    "starsCount": "{count} stars",
     "downloadsCount": "{count} downloads",
     "forksCount": "{count} forks",
     "lastRelease": "last release {when}",
