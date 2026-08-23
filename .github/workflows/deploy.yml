@@ -78,7 +78,11 @@ jobs:
             test -d .venv || python3 -m venv .venv
             .venv/bin/pip install --quiet --upgrade pip
             .venv/bin/pip install --quiet -r requirements.txt
-            set -a; . /home/ubuntu/apps/santella.dev/api.env; set +a
+            test -r ${APP_DIR}/api.env || {
+              echo "api.env is not readable by \$(whoami): \$(ls -ld ${APP_DIR}/api.env 2>&1)" >&2
+              exit 1
+            }
+            set -a; . ${APP_DIR}/api.env; set +a
             .venv/bin/python tools/manage.py init-db
             sudo supervisorctl restart santella-api
           REMOTE
