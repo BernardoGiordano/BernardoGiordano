@@ -1,6 +1,8 @@
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
-import { join, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { join, resolve, sep } from 'node:path';
+import { transform } from 'esbuild';
 
 /**
  * Assemble dist/ in the shape the import map already points at.
@@ -11,7 +13,12 @@ import { join, resolve } from 'node:path';
  *   1. run the Tailwind CLI once over the sources, emitting app.css;
  *   2. swap index.html from the browser JIT script to that stylesheet;
  *   3. copy @srljs/core's lib/ and components/ to /lib/ and /components/, minus
- *      the development-only Tailwind bundle nothing in production loads.
+ *      the development-only Tailwind bundle nothing in production loads;
+ *   4. minify the JavaScript and CSS it is about to ship, and prove that the
+ *      files it deliberately did not touch still hash to what index.html pins.
+ *
+ * Pass --no-minify to skip step 4 when a production-only fault has to be read in
+ * the browser's own stack trace.
  */
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -53,6 +60,67 @@ await cp(join(SRL, 'components'), join(DIST, 'components'), { recursive: true })
 await rm(join(DIST, 'lib/vendor/tailwind-browser.js'));
 await rm(join(DIST, 'lib/test'), { recursive: true, force: true });
 await rm(join(DIST, 'components/test'), { recursive: true, force: true });
+
+// Every path index.html pins a sha384 for. Both trees arrive minified from
+// upstream, and rewriting one byte of either is not a smaller file, it is a
+// module the browser refuses to execute.
+const PINNED = /^(?:lib\/)?vendor\//u;
+
+const paths = [];
+for (const entry of await readdir(DIST, { recursive: true })) {
+  const path = join(DIST, entry);
+  if ((await stat(path)).isFile()) paths.push([entry.split(sep).join('/'), path]);
+}
+
+// Type declarations travel with the package and no browser ever asks for them.
+for (const [url, path] of paths) {
+  if (url.endsWith('.d.ts')) await rm(path);
+}
+
+if (!process.argv.includes('--no-minify')) {
+  let before = 0;
+  let after = 0;
+  let count = 0;
+
+  for (const [url, path] of paths) {
+    if (url.endsWith('.d.ts')) continue;
+
+    // A file at a time, and never bundled. The import map is the module graph:
+    // a bundler would have to be taught the same bare specifiers the browser
+    // already resolves, and srl derives a component's template URL from its own
+    // import.meta.url, so the .js files have to keep their names and stay beside
+    // the .html next to them.
+    const loader = url.endsWith('.js') || url.endsWith('.mjs') ? 'js' : url.endsWith('.css') ? 'css' : null;
+    if (loader === null) continue;
+
+    // app.css came out of the Tailwind CLI above with --minify already.
+    if (PINNED.test(url) || url === 'app.css') continue;
+
+    const source = await readFile(path, 'utf8');
+    // No format: 'esm'. It would let esbuild rename module-level names too,
+    // which measured 648 bytes over 91 files — nothing, against a rename that
+    // reaches anything reading a class or function by name at runtime.
+    const { code } = await transform(source, { loader, minify: true, target: 'esnext' });
+    await writeFile(path, code);
+
+    before += Buffer.byteLength(source);
+    after += Buffer.byteLength(code);
+    count += 1;
+  }
+
+  const saved = Math.round(((before - after) / before) * 100);
+  process.stdout.write(`minified ${count} files, ${Math.round(before / 1024)}K -> ${Math.round(after / 1024)}K (-${saved}%)\n`);
+}
+
+// The loop above skips two trees on purpose. This is what proves it did: a hash
+// index.html pins and dist/ no longer matches is a blank page for whoever visits
+// next and nothing at all in this job's output.
+const pinned = JSON.parse(/<script type="importmap">([\s\S]*?)<\/script>/u.exec(html)[1]).integrity;
+for (const [url, expected] of Object.entries(pinned)) {
+  const actual = `sha384-${createHash('sha384').update(await readFile(join(DIST, url.slice(1)))).digest('base64')}`;
+  if (actual !== expected) throw new Error(`${url} hashes to ${actual}, index.html pins ${expected}`);
+}
+process.stdout.write(`${Object.keys(pinned).length} pinned files still match index.html\n`);
 
 const stamp = spawnSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: ROOT, encoding: 'utf8' });
 await writeFile(
