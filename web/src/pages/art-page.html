@@ -22,16 +22,17 @@
              would otherwise leave a 220px hole beside its own title, so its
              links move under the credit line instead. -->
         <div *if="work.coverUrl" class="w-full shrink-0 sm:w-[220px]">
-          <div
-            class="release-frame {{ isPortrait(work) ? 'w-[164px] aspect-[164/220]' : 'w-full sm:w-[220px] aspect-square' }}"
-          >
+          <!-- No fixed aspect box: a book's cover is not a record's, and
+               neither is cropped to fit a shape it was never drawn for. The
+               width is what's fixed; the height follows the image. -->
+          <div class="release-frame {{ isPortrait(work) ? 'w-[164px]' : 'w-full sm:w-[220px]' }}">
             <img
               [src]="work.coverUrl"
               [alt]="work.title"
-              width="440"
-              height="440"
+              [width]="isPortrait(work) ? 164 : 440"
+              [height]="isPortrait(work) ? 220 : 440"
               loading="lazy"
-              class="size-full object-cover"
+              class="block w-full h-auto"
             />
           </div>
 
@@ -95,14 +96,12 @@
             {{ work.description }}
           </p>
 
-          <!-- Bandcamp's player, reduced to the transport, the title and the
-               buy link: 120px at any width, with a thumbnail instead of the
-               500px cover. The tracklist we used to draw under it is gone — the
-               player already names the tracks, and two lists of the same eight
-               titles is one list too many. -->
+          <!-- Bandcamp's player, minus its own cover — the one above it is
+               ours — with its track list left on, since that is the one list
+               of the two that this page does not already draw. -->
           <div *if="hasEmbed(work)" class="mt-6">
             <div class="release-frame">
-              <iframe [src]="embedUrl(work)" [title]="work.title" class="player-bar" loading="lazy" seamless></iframe>
+              <iframe [src]="embedUrl(work)" [title]="work.title" class="player-bar" loading="lazy" scrolling="no" seamless></iframe>
             </div>
           </div>
         </div>

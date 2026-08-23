@@ -421,16 +421,26 @@ h1.display,
 }
 
 /* ── A release ────────────────────────────────────────────────────────────
-   The cover is ours, at a size worth looking at, and the tracklist under it is
-   ours in our own type. What is left for Bandcamp's iframe is the transport,
-   which is the one thing it does better than we can. `size=large` with
-   `artwork=small` and `tracklist=false` is that player at 120px: a cover
-   thumbnail, the title, and the play and buy controls — no second cover at
-   500px, no second tracklist arguing with ours. */
+   The cover is ours, at a size worth looking at; the transport and the track
+   list are Bandcamp's, since it already has to draw a list to seek within.
+   `size=large` with `artwork=none` and `tracklist=true` is that player without
+   its own cover — no second one arguing with ours above it.
+
+   Bandcamp sizes the track list to fill whatever height the iframe is given,
+   scrolling internally past it, so 460px is a fixed pick rather than a
+   measurement: room for a typical eight- or nine-track record before its own
+   list takes over the scrolling.
+
+   The player's own layout tops out at 700px wide and does not stretch past
+   it — an iframe wider than that shows its plain white body in the leftover
+   space instead of the page underneath, `transparent=true` notwithstanding.
+   The 700px cap keeps the frame exactly as wide as the player actually
+   draws. */
 
 .release-frame {
   border-radius: var(--site-radius);
   box-shadow: 0 0 0 1px var(--ui-color-border);
+  max-width: 700px;
   overflow: hidden;
 }
 
@@ -438,7 +448,7 @@ h1.display,
   border: 0;
   border-radius: var(--site-radius);
   display: block;
-  height: 120px;
+  height: 460px;
   overflow: hidden;
   width: 100%;
 }

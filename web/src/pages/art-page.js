@@ -61,13 +61,12 @@ export class ArtPage extends SignalElement {
    * The embed URL, trusted for a resource sink after the album id is checked to
    * be digits and the origin is fixed here rather than taken from the record.
    *
-   * `size=large` with `artwork=small` and `tracklist=false` is Bandcamp's own
-   * player cut down to the parts this page does not already have: a transport,
-   * the title, a thumbnail and a buy link, 120px tall at any width. The full
-   * large player is a 700x500 box with its own cover, its own track list and its
-   * own typography, and in a column two thirds that wide it was the loudest
-   * thing on the page and the only part of it nobody here designed. The cover
-   * above it is ours.
+   * `artwork=none` drops Bandcamp's own cover — the one above it is ours, and a
+   * second one a few sizes smaller was never doing anything the first didn't.
+   * `tracklist=true` puts the track list back, in Bandcamp's own player rather
+   * than a second one drawn here in our type: it already has to render one to
+   * seek within, so a copy beside it was one list too many for no player and
+   * two lists for this one.
    *
    * `transparent=true` lets the page's own ground show through the player rather
    * than have it paint a rectangle a few values off the surface it sits on;
@@ -84,7 +83,7 @@ export class ArtPage extends SignalElement {
     if (!/^\d+$/u.test(work.bandcampAlbumId)) return '';
     const skin = resolvedTheme.value === 'dark' ? PLAYER_SKIN.dark : PLAYER_SKIN.light;
     const url = new URL(
-      `/EmbeddedPlayer/album=${work.bandcampAlbumId}/size=large/bgcol=${skin.background}/linkcol=${skin.link}/tracklist=false/artwork=small/transparent=true/`,
+      `/EmbeddedPlayer/album=${work.bandcampAlbumId}/size=large/bgcol=${skin.background}/linkcol=${skin.link}/tracklist=true/artwork=none/transparent=true/`,
       BANDCAMP_ORIGIN,
     );
     return bypassSecurityTrustResourceUrl(url.href);
