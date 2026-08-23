@@ -1,0 +1,114 @@
+<section>
+  <div *if="canEdit" class="mb-6 flex items-center gap-3">
+    <button *if="!isCreating" type="button" class="btn btn-quiet" (click)="openNew()">
+      + {{ t('art.addWork') }}
+    </button>
+    <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+  </div>
+
+  <art-editor *if="isCreating" class="edit-open mb-8" (saved)="close()" (cancelled)="close()"></art-editor>
+
+  <p *if="isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
+
+  <!-- One long scroll, a block per release: the cover and what you can do with
+       it on the left, everything the record says on the right. A book takes the
+       same block with a portrait cover and a blurb where the player goes. -->
+  <ul class="rule-list flex flex-col">
+    <li *for="work of rows; key: work.id" class="{{ canEdit ? 'py-7 first:pt-0' : 'py-10 first:pt-0' }}">
+      <art-editor *if="isEditing(work)" class="edit-open" [.record]="work" (saved)="close()" (cancelled)="close()"></art-editor>
+
+      <div *else class="flex flex-col gap-6 sm:flex-row sm:gap-7 {{ canEdit ? 'edit-target' : '' }}">
+        <!-- The cover column exists when there is a cover. A record with none
+             would otherwise leave a 220px hole beside its own title, so its
+             links move under the credit line instead. -->
+        <div *if="work.coverUrl" class="w-full shrink-0 sm:w-[220px]">
+          <div
+            class="release-frame {{ isPortrait(work) ? 'w-[164px] aspect-[164/220]' : 'w-full sm:w-[220px] aspect-square' }}"
+          >
+            <img
+              [src]="work.coverUrl"
+              [alt]="work.title"
+              width="440"
+              height="440"
+              loading="lazy"
+              class="size-full object-cover"
+            />
+          </div>
+
+          <!-- The links are the actions here, so they are buttons under the
+               cover rather than a row of icons at the foot of the block. The
+               first is the one to press; the rest are quiet. -->
+          <div *if="work.links.length" class="mt-4 flex flex-col gap-1.5 {{ isPortrait(work) ? 'w-[164px]' : '' }}">
+            <a
+              *for="link of work.links; key: link.url"
+              [href]="link.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn w-full {{ isPrimaryLink(work, link) ? 'btn-primary' : 'btn-quiet' }}"
+            >
+              {{ link.label }}
+              <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path [d]="icon('arrowUpRight')"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="eyebrow">{{ kindLine(work) }}</p>
+              <h2 class="display mt-2 text-[26px] text-ink sm:text-[32px]">{{ work.title }}</h2>
+              <p *if="creditLine(work)" class="mt-1 text-[14px] text-ink/55">{{ creditLine(work) }}</p>
+            </div>
+
+            <row-tools
+              *if="canEdit"
+              class="edit-tools"
+              [.can-move]="false"
+              [.busy]="isBusy(work)"
+              (edit)="open(work)"
+              (remove)="discard(work)"
+            ></row-tools>
+          </div>
+
+          <div *if="work.formats.length" class="mt-4 flex flex-wrap gap-1.5">
+            <span *for="format of work.formats; key: format" class="chip">{{ format }}</span>
+          </div>
+
+          <div *if="!work.coverUrl && work.links.length" class="mt-5 flex flex-wrap gap-1.5">
+            <a
+              *for="link of work.links; key: link.url"
+              [href]="link.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn {{ isPrimaryLink(work, link) ? 'btn-primary' : 'btn-quiet' }}"
+            >
+              {{ link.label }}
+              <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path [d]="icon('arrowUpRight')"></path>
+              </svg>
+            </a>
+          </div>
+
+          <p *if="work.description" class="mt-5 max-w-[56ch] text-[13.5px] leading-relaxed text-ink/70">
+            {{ work.description }}
+          </p>
+
+          <!-- Bandcamp's player, reduced to the transport, the title and the
+               buy link: 120px at any width, with a thumbnail instead of the
+               500px cover. The tracklist we used to draw under it is gone — the
+               player already names the tracks, and two lists of the same eight
+               titles is one list too many. -->
+          <div *if="hasEmbed(work)" class="mt-6">
+            <div class="release-frame">
+              <iframe [src]="embedUrl(work)" [title]="work.title" class="player-bar" loading="lazy" seamless></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <p *if="!isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('art.empty') }}</p>
+</section>

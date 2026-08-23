@@ -1,0 +1,45 @@
+<div class="flex min-h-screen items-center justify-center px-5 py-12">
+  <div class="w-full max-w-[320px]">
+    <form class="space-y-4" (submit)="submit($event)">
+      <div>
+        <h1 class="display text-[25px] text-ink">{{ t('login.title') }}</h1>
+        <p class="mt-1 text-[13px] text-muted">{{ t('login.lead') }}</p>
+      </div>
+
+      <label class="block">
+        <span class="text-[12px] font-medium text-muted">{{ t('login.username') }}</span>
+        <input
+          name="username"
+          required
+          autocomplete="username"
+          class="edit-input mt-1 py-2"
+        />
+      </label>
+
+      <label class="block">
+        <span class="text-[12px] font-medium text-muted">{{ t('login.password') }}</span>
+        <input
+          name="password"
+          type="password"
+          required
+          autocomplete="current-password"
+          class="edit-input mt-1 py-2"
+        />
+      </label>
+
+      <p *if="errorMessage" class="edit-error" role="alert">
+        {{ errorMessage }}
+      </p>
+
+      <button
+        type="submit"
+        [?disabled]="busy"
+        class="btn btn-primary w-full py-2 text-[13.5px]"
+      >
+        {{ busy ? t('login.submitting') : t('login.submit') }}
+      </button>
+
+      <a href="/projects" class="block text-center text-[12.5px] text-muted transition-colors hover:text-brand">{{ t('login.back') }}</a>
+    </form>
+  </div>
+</div>

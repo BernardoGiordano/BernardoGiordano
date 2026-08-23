@@ -1,0 +1,159 @@
+<form class="edit-panel" (submit)="submit($event)">
+  <div class="edit-grid">
+    <ui-field
+      name="name"
+      required
+      label="{{ t('editor.projectName') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.name"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="description"
+      label="{{ t('editor.description') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.description"
+    >
+      <textarea rows="3" class="edit-area"></textarea>
+    </ui-field>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="url"
+        label="{{ t('editor.url') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.url"
+      >
+        <input class="edit-input" type="url" />
+      </ui-field>
+
+      <ui-field
+        name="repo"
+        label="{{ t('editor.repo') }}"
+        hint="{{ t('editor.repoHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.repo"
+      >
+        <input class="edit-input" placeholder="BernardoGiordano/Checkpoint" />
+      </ui-field>
+    </div>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="kind"
+        label="{{ t('editor.kind') }}"
+        hint="{{ t('editor.kindHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.kind"
+      >
+        <input class="edit-input" />
+      </ui-field>
+
+      <ui-field
+        name="platforms"
+        label="{{ t('editor.platforms') }}"
+        hint="{{ t('editor.listHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.platforms"
+      >
+        <input class="edit-input" />
+      </ui-field>
+    </div>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="tech"
+        label="{{ t('editor.tech') }}"
+        hint="{{ t('editor.listHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.tech"
+      >
+        <input class="edit-input" />
+      </ui-field>
+
+      <ui-field
+        name="downloadsOverride"
+        label="{{ t('editor.downloadsOverride') }}"
+        hint="{{ t('editor.downloadsHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.downloadsOverride"
+      >
+        <input class="edit-input" inputmode="numeric" />
+      </ui-field>
+    </div>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="role"
+        label="{{ t('editor.role') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.role"
+      >
+        <select class="edit-input">
+          <option *for="option of roles; key: option" [value]="option">{{ t(roleLabel(option)) }}</option>
+        </select>
+      </ui-field>
+
+      <ui-field
+        name="status"
+        label="{{ t('editor.status') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.status"
+      >
+        <select class="edit-input">
+          <option *for="option of statuses; key: option" [value]="option">{{ t(statusLabel(option)) }}</option>
+        </select>
+      </ui-field>
+    </div>
+
+    <div class="flex flex-wrap gap-5 pt-1">
+      <label class="edit-check">
+        <input
+          type="checkbox"
+          [.checked]="form.fields.openSource.value"
+          [?disabled]="form.disabled"
+          (change)="form.fields.openSource.setValue($event.target.checked)"
+        />
+        {{ t('editor.openSource') }}
+      </label>
+
+      <label class="edit-check">
+        <input
+          type="checkbox"
+          [.checked]="form.fields.featured.value"
+          [?disabled]="form.disabled"
+          (change)="form.fields.featured.setValue($event.target.checked)"
+        />
+        {{ t('editor.featured') }}
+      </label>
+    </div>
+  </div>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <div class="edit-actions">
+    <button type="submit" class="btn btn-primary" [?disabled]="busy">
+      {{ busy ? t('editor.saving') : t('site.save') }}
+    </button>
+    <button type="button" class="btn btn-quiet" (click)="cancel()" [?disabled]="busy">
+      {{ t('site.cancel') }}
+    </button>
+  </div>
+</form>

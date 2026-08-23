@@ -1,0 +1,19 @@
+{
+  "note": "Vendored so the browser fetches them same-origin under import-map integrity, the same rule srl applies to lit and signals-core. Refresh with tools/dev/vendor.mjs.",
+  "files": {
+    "marked.esm.js": {
+      "package": "marked",
+      "version": "18.0.10",
+      "license": "MIT",
+      "from": "node_modules/marked/lib/marked.esm.js",
+      "integrity": "sha384-8gndHxNwoJj7V8dUER8TRVsU8hR/8s8gLmD4iNtjjoPo+OyuzQLfUjn5EE99mFiW"
+    },
+    "purify.es.mjs": {
+      "package": "dompurify",
+      "version": "3.4.14",
+      "license": "Apache-2.0 OR MPL-2.0",
+      "from": "node_modules/dompurify/dist/purify.es.mjs",
+      "integrity": "sha384-+JvxJLE2Z7HGcDldNdhxV4coZDWMxCa65LBqbqTfhbUBPwyOnP9H4WTR45aa/no1"
+    }
+  }
+}

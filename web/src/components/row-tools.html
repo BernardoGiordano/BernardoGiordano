@@ -1,0 +1,71 @@
+<div class="edit-tools">
+  <button
+    *if="canEdit"
+    type="button"
+    class="btn-icon"
+    (click)="edit()"
+    [?disabled]="busy"
+    [aria-label]="t('site.edit')"
+    [title]="t('site.edit')"
+  >
+    <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path [d]="icon('pencil')"></path>
+    </svg>
+  </button>
+
+  <div *if="canMove" class="edit-tools">
+    <button
+      type="button"
+      class="btn-icon"
+      (click)="up()"
+      [?disabled]="busy || !canUp"
+      [aria-label]="t('site.moveUp')"
+      [title]="t('site.moveUp')"
+    >
+      <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path [d]="icon('arrowUp')"></path>
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="btn-icon"
+      (click)="down()"
+      [?disabled]="busy || !canDown"
+      [aria-label]="t('site.moveDown')"
+      [title]="t('site.moveDown')"
+    >
+      <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path [d]="icon('arrowDown')"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div *if="canDelete" class="edit-tools">
+    <!-- The armed state is the site's one danger colour, from the palette. It
+         used to be Tailwind's rose, which is the only colour on the site that
+         belonged to no theme and did not change with one. -->
+    <span *if="confirming" class="text-[11.5px] font-medium text-[var(--site-danger)]">
+      {{ confirmLabel }}
+    </span>
+
+    <button
+      type="button"
+      class="btn-icon {{ confirming ? 'btn-armed' : '' }}"
+      (click)="pressDelete()"
+      [?disabled]="busy"
+      [aria-label]="t('site.delete')"
+      [title]="t('site.delete')"
+    >
+      <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path [d]="icon('trash2')"></path>
+      </svg>
+    </button>
+
+    <button *if="confirming" type="button" class="btn-icon" (click)="cancel()" [aria-label]="t('site.cancel')">
+      <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path [d]="icon('x')"></path>
+      </svg>
+    </button>
+  </div>
+</div>

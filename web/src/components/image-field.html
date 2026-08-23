@@ -1,0 +1,32 @@
+<div class="flex items-start gap-3">
+  <div
+    *if="url"
+    class="portrait shrink-0 bg-surface {{ previewClass }}"
+  >
+    <img [src]="url" alt="" class="size-full object-cover" />
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="btn btn-quiet"
+        (click)="choose()"
+        [?disabled]="disabled"
+        [aria-labelledby]="labelledByAttr"
+        [aria-describedby]="describedByAttr"
+        [aria-invalid]="invalidAttr"
+      >
+        {{ buttonLabel }}
+      </button>
+
+      <button *if="url" type="button" class="btn btn-quiet" (click)="clear()" [?disabled]="disabled">
+        {{ t('editor.removeImage') }}
+      </button>
+    </div>
+
+    <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+    <input type="file" accept="image/*" class="sr-only" tabindex="-1" (change)="pick($event)" />
+  </div>
+</div>

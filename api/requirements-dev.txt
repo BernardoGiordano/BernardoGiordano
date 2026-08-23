@@ -1,0 +1,2 @@
+# Only the test suite needs these; the running service does not.
+pytest==9.1.1

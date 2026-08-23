@@ -1,0 +1,13 @@
+{
+  "$comment": "Runtime configuration, fetched on every load with cache: no-cache.",
+  "remotes": [],
+  "i18n": {
+    "defaultLocale": "en",
+    "supportedLocales": ["en"],
+    "bundles": ["/i18n/{locale}.json"]
+  },
+  "auth": {
+    "$comment": "Where the API is, and nothing else. Which strategy this site uses is a decision in src/main.js and its endpoints are a fact in src/auth/bff-cookie-store.js.",
+    "apiBaseUrl": "/api"
+  }
+}

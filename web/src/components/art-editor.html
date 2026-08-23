@@ -1,0 +1,176 @@
+<form class="edit-panel" (submit)="submit($event)">
+  <div class="edit-grid">
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="title"
+        required
+        label="{{ t('editor.title') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.title"
+      >
+        <input class="edit-input" />
+      </ui-field>
+
+      <ui-field
+        name="subtitle"
+        label="{{ t('editor.subtitle') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.subtitle"
+      >
+        <input class="edit-input" />
+      </ui-field>
+    </div>
+
+    <ui-field
+      name="description"
+      label="{{ t('editor.description') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.description"
+    >
+      <textarea rows="3" class="edit-area"></textarea>
+    </ui-field>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="releasedOn"
+        required
+        label="{{ t('editor.releasedOn') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.releasedOn"
+      >
+        <input class="edit-input" type="date" />
+      </ui-field>
+
+      <ui-field
+        name="kind"
+        label="{{ t('editor.artKind') }}"
+        hint="{{ t('editor.artKindHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.kind"
+      >
+        <input class="edit-input" />
+      </ui-field>
+    </div>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="label"
+        label="{{ t('editor.artLabel') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.label"
+      >
+        <input class="edit-input" />
+      </ui-field>
+
+      <ui-field
+        name="formats"
+        label="{{ t('editor.formats') }}"
+        hint="{{ t('editor.formatsHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.formats"
+      >
+        <input class="edit-input" />
+      </ui-field>
+    </div>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="bandcampAlbumId"
+        label="{{ t('editor.bandcampId') }}"
+        hint="{{ t('editor.bandcampHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.bandcampAlbumId"
+      >
+        <input class="edit-input" inputmode="numeric" />
+      </ui-field>
+
+      <ui-field
+        name="catalogNumber"
+        label="{{ t('editor.catalogNumber') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.catalogNumber"
+      >
+        <input class="edit-input" />
+      </ui-field>
+    </div>
+
+    <ui-field
+      name="coverUrl"
+      label="{{ t('editor.cover') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.coverUrl"
+    >
+      <image-field purpose="art" preview-class="size-[86px]"></image-field>
+    </ui-field>
+
+    <div class="edit-group">
+      <span class="edit-label">{{ t('editor.links') }}</span>
+
+      <!-- The two widths are on the `ui-field` elements and not in `field-class`.
+           `field-class` lands on the wrapper *inside* the field, which is not the
+           flex item: the label's 34% was 34% of a host that had already shrunk to
+           its content, and `flex-1` grew a div inside a box that never grew. The
+           row is the flex container, so its children are what carry the widths. -->
+      <div *for="row of form.fields.links.rows; key: row.key" class="edit-row">
+        <ui-field
+          class="w-[34%]"
+          [name]="'links.' + row.index + '.label'"
+          error-class="edit-error"
+          [.field]="row.control.fields.label"
+        >
+          <input class="edit-input" [placeholder]="t('editor.linkLabel')" />
+        </ui-field>
+
+        <ui-field
+          class="min-w-0 flex-1"
+          [name]="'links.' + row.index + '.url'"
+          error-class="edit-error"
+          [.field]="row.control.fields.url"
+        >
+          <input class="edit-input" type="url" [placeholder]="t('editor.linkUrl')" />
+        </ui-field>
+
+        <button
+          type="button"
+          class="btn-icon"
+          (click)="removeLink(row.index)"
+          [aria-label]="t('editor.removeRow')"
+          [title]="t('editor.removeRow')"
+        >
+          <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [d]="icon('x')"></path>
+          </svg>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-quiet justify-self-start" (click)="addLink()">
+        + {{ t('editor.addLink') }}
+      </button>
+    </div>
+
+  </div>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <div class="edit-actions">
+    <button type="submit" class="btn btn-primary" [?disabled]="busy">
+      {{ busy ? t('editor.saving') : t('site.save') }}
+    </button>
+    <button type="button" class="btn btn-quiet" (click)="cancel()" [?disabled]="busy">
+      {{ t('site.cancel') }}
+    </button>
+  </div>
+</form>

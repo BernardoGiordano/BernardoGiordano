@@ -1,0 +1,49 @@
+<div>
+  <div class="mb-2 flex items-center gap-4 border-b border-ui-border">
+    <button
+      type="button"
+      class="cursor-pointer border-b-2 pb-1.5 text-[12.5px] font-medium transition-colors {{ tabClasses(false) }}"
+      (click)="show(false)"
+    >
+      {{ t('editor.write') }}
+    </button>
+    <button
+      type="button"
+      class="cursor-pointer border-b-2 pb-1.5 text-[12.5px] font-medium transition-colors {{ tabClasses(true) }}"
+      (click)="show(true)"
+    >
+      {{ t('editor.preview') }}
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-quiet mb-1.5 ms-auto"
+      (click)="chooseImage()"
+      [?disabled]="disabled || busy"
+    >
+      {{ uploadLabel }}
+    </button>
+  </div>
+
+  <textarea
+    *if="!previewing"
+    [rows]="rows"
+    class="edit-area font-mono text-[12.5px]"
+    spellcheck="false"
+    [?disabled]="disabled"
+    (input)="type($event)"
+    [aria-labelledby]="labelledByAttr"
+    [aria-describedby]="describedByAttr"
+    [aria-invalid]="invalidAttr"
+  ></textarea>
+
+  <md-body
+    *else
+    class="prose-site min-h-[8rem] rounded-[var(--site-radius)] border border-ui-border bg-surface px-3 py-2"
+    [.markdown]="text"
+  ></md-body>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <input type="file" accept="image/*" class="sr-only" tabindex="-1" (change)="pick($event)" />
+</div>

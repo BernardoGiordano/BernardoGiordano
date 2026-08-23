@@ -1,0 +1,1010 @@
+/* Plain CSS, linked in every mode: Tailwind's browser JIT reads index.html and
+   the CLI reads src/app.css, so anything that must exist in both lives here
+   instead of being written twice. */
+
+/* ── Palette ──────────────────────────────────────────────────────────────
+   srl's theme-default.css is deliberately achromatic, and a personal site is
+   the one place a palette should not be. These three blocks mirror its three
+   exactly — `:root` for light, the media query for the moment before the theme
+   controller has written an attribute, `[data-theme='dark']` for the explicit
+   choice — because equal specificity means the later stylesheet wins in each
+   context, and this file is linked after that one.
+
+   The colours are Nocturne: a near-neutral blue-grey ground with one blurple
+   accent used as a line, a mark and a rule rather than as a fill. Contrast
+   comes from the tonal ramps, not from saturation, so every value below is a
+   step of the 100–900 ramps the system generated in OKLCH — the same step of
+   any ramp carries the same visual weight.
+
+   Dark is the direction's home. Light is the same variables with the ramps
+   flipped: ground neutral-100, text neutral-900, and the accent stepped down
+   to 700 so body-size accent text stays readable on paper values.
+
+   The `--site-*` tokens are this site's own. Nothing paints a hard-coded
+   colour below. */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --ui-color-canvas: #f3f5fe;
+  --ui-color-surface: #e7eaf7;
+  --ui-color-surface-raised: #dce0f0;
+  --ui-color-hover: #d5daee;
+  --ui-color-text: #292b31;
+  --ui-color-text-muted: #75798c;
+  --ui-color-border: #ced2e0;
+  --ui-color-primary: #5d5294;
+  --ui-color-primary-hover: #423a6a;
+  --ui-color-primary-contrast: #f5f4ff;
+  --ui-color-accent: #5d5294;
+  --ui-color-accent-strong: #423a6a;
+  --ui-color-overlay: rgb(41 43 49 / 52%);
+  --ui-color-focus-ring: #5d5294;
+  --ui-color-shadow: rgb(41 43 49 / 12%);
+
+  /* Heavier than `--ui-color-text`, for the few marks that sit on top of it. */
+  --site-ink-strong: #1a1c22;
+  --site-rule: #ced2e0;
+  --site-danger: #a5304a;
+
+  /* The one colour on the site that is not a step of a Nocturne ramp. A green
+     dot means one thing and the accent's blurple would mean nothing, so this is
+     a semantic light, not a second brand colour — and it is a 7px circle. */
+  --site-open: #3f8f5c;
+
+  /* Body-size accent text: the accent-to-ground pair is tuned to 3:1, which is
+     enough for icons, large type and chrome but not for a paragraph. A deep
+     ramp step carries prose in the accent's hue instead. */
+  --site-accent-quiet: #423a6a;
+
+  /* Rules fade to transparent at their ends rather than stopping cleanly — the
+     Nocturne signature — and this is the colour they fade from. */
+  --site-rule-soft: rgb(41 43 49 / 14%);
+
+  /* The two washes behind the page, and the tint the pinned bar veils it with.
+     Soft gradient depth, not a flat fill: the ground stays desaturated. */
+  --site-wash-a: rgb(93 82 148 / 8%);
+  --site-wash-b: rgb(117 121 140 / 8%);
+  --site-row-hover: rgb(41 43 49 / 4%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --ui-color-canvas: #161826;
+    --ui-color-surface: #232532;
+    --ui-color-surface-raised: #2b2e3d;
+    --ui-color-hover: #32354a;
+    --ui-color-text: #e9e9ed;
+    --ui-color-text-muted: #9397ab;
+    --ui-color-border: #3f424d;
+    --ui-color-primary: #9184d9;
+    --ui-color-primary-hover: #b5abfc;
+    --ui-color-primary-contrast: #161826;
+    --ui-color-accent: #9184d9;
+    --ui-color-accent-strong: #b5abfc;
+    --ui-color-overlay: rgb(0 0 0 / 66%);
+    --ui-color-focus-ring: #9184d9;
+    --ui-color-shadow: rgb(0 0 0 / 55%);
+
+    --site-ink-strong: #f5f4ff;
+    --site-rule: #3f424d;
+    --site-danger: #d98484;
+    --site-open: #7fca94;
+
+    --site-accent-quiet: #d2cefd;
+
+    --site-rule-soft: rgb(233 233 237 / 9%);
+
+    --site-wash-a: rgb(145 132 217 / 9%);
+    --site-wash-b: rgb(76 83 151 / 10%);
+    --site-row-hover: rgb(233 233 237 / 4%);
+  }
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --ui-color-canvas: #161826;
+  --ui-color-surface: #232532;
+  --ui-color-surface-raised: #2b2e3d;
+  --ui-color-hover: #32354a;
+  --ui-color-text: #e9e9ed;
+  --ui-color-text-muted: #9397ab;
+  --ui-color-border: #3f424d;
+  --ui-color-primary: #9184d9;
+  --ui-color-primary-hover: #b5abfc;
+  --ui-color-primary-contrast: #161826;
+  --ui-color-accent: #9184d9;
+  --ui-color-accent-strong: #b5abfc;
+  --ui-color-overlay: rgb(0 0 0 / 66%);
+  --ui-color-focus-ring: #9184d9;
+  --ui-color-shadow: rgb(0 0 0 / 55%);
+
+  --site-ink-strong: #f5f4ff;
+  --site-rule: #3f424d;
+  --site-danger: #d98484;
+  --site-open: #7fca94;
+
+  --site-accent-quiet: #d2cefd;
+
+  --site-rule-soft: rgb(233 233 237 / 9%);
+
+  --site-wash-a: rgb(145 132 217 / 9%);
+  --site-wash-b: rgb(76 83 151 / 10%);
+  --site-row-hover: rgb(233 233 237 / 4%);
+}
+
+/* ── Type and shape ───────────────────────────────────────────────────────
+   One family, in its own block because it does not change with the theme.
+
+   Nocturne is Inter over Inter: headings and body in the same face, hierarchy
+   carried by size and space rather than by a second family or a heavier
+   weight. Headings stop at 500 — the system says not to bolden them past it,
+   because at 600 the size steps stop being the thing that separates them.
+
+   `--site-font-display` keeps its name so every `.display` in the templates
+   still resolves; it is now the same stack as body text, one notch tighter in
+   tracking. The mono stack survives for the two places a fixed advance is
+   actually wanted — a code block and an input's caret column. Everything that
+   used to be set in it now takes `tabular-nums` from Inter instead, which is
+   what the mockups show: figures that line up without changing face.
+
+   8px, not 2px: Nocturne's radius scale is soft, and the density is 0.70×. */
+
+:root {
+  --site-font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --site-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --site-radius: 8px;
+  --site-radius-sm: 4px;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── The page itself ──────────────────────────────────────────────────────
+   Two washes behind everything, fixed so they belong to the window rather than
+   to the scroll position, and faint enough that what they do is give the flat
+   ground some depth rather than colour it. */
+
+/* The canvas colour is on the root, not on `body`: an opaque body background
+   would paint over the washes below, which are a `body::before` behind the
+   content. */
+html {
+  background-color: var(--ui-color-canvas);
+}
+
+/* srl's style.css paints the canvas colour on `body`, which is opaque and sits
+   over the washes below. The colour moves to the root and `body` gets out of
+   the way. */
+body {
+  background-color: transparent;
+}
+
+body::before {
+  background:
+    radial-gradient(88rem 52rem at 10% -22%, var(--site-wash-a), transparent 60%),
+    radial-gradient(70rem 44rem at 94% 4%, var(--site-wash-b), transparent 58%);
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: -1;
+}
+
+/* A heading in the display face. Its own class rather than a Tailwind utility
+   because `text-wrap` belongs with it every time, and because the tracking a
+   large Inter heading wants is not the tracking body text wants: -0.015em is
+   the system's own heading value. */
+.display {
+  font-family: var(--site-font-display);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  text-wrap: pretty;
+}
+
+h1.display,
+.display-lead {
+  text-wrap: balance;
+}
+
+/* Metadata: counts, dates, catalogue numbers, handles. Not a second face —
+   Inter's tabular figures line a column of numbers up on their own, and the
+   mockups set every meta line in the same sans as the copy around it. */
+.meta {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* ── Rules ────────────────────────────────────────────────────────────────
+   A Nocturne rule fades to transparent over 48px at each end instead of
+   stopping cleanly. It is the one graphic device the system repeats, and it is
+   why nothing on the page needs a box around it: a rule that does not reach
+   the edge reads as a separation rather than as the side of a container.
+
+   `.grad-rule` keeps its name — it is in every template — and is now that
+   fading rule. `.rule-list > * + *` paints the same thing as a row's top edge,
+   which is what replaced `divide-y`: a divider can be a border, but a border
+   cannot fade. */
+
+.grad-rule {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--site-rule-soft) 48px,
+    var(--site-rule-soft) calc(100% - 48px),
+    transparent
+  );
+  border: 0;
+  height: 1px;
+}
+
+.rule-list > * + * {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--site-rule-soft) 48px,
+    var(--site-rule-soft) calc(100% - 48px),
+    transparent
+  );
+  background-position: top left;
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+}
+
+/* A rule under a narrow column — a rail, a phone — has no room to spend 48px
+   an end fading, so there it stays solid and simply gets quieter. */
+.rule-tight {
+  background-color: var(--site-rule-soft);
+  border: 0;
+  height: 1px;
+}
+
+/* The active tab's mark. */
+.tab-mark {
+  background-color: var(--ui-color-accent);
+  bottom: -1px;
+  content: '';
+  height: 1px;
+  inset-inline: 0;
+  position: absolute;
+}
+
+/* The tab bar, pinned over content that scrolls under it. Solid first so the
+   bar is never transparent where `backdrop-filter` is unsupported. */
+.bar-blur {
+  background-color: var(--ui-color-canvas);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  /* Blur and no colour at all, which is the only thing that leaves no band.
+     A tint is a colour averaged with whatever is behind it, and behind the bar
+     is a wash a few per cent off the canvas beside it — so any tint, at any
+     alpha, paints a rectangle a few values off its surroundings, and a flat
+     page shows a five-value step as an edge. Blurring a flat area returns the
+     same flat area, so at the top of the page the bar is invisible by
+     arithmetic rather than by a colour that nearly matches. */
+  .bar-blur {
+    backdrop-filter: blur(16px);
+    background-color: transparent;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* A list row that answers the pointer without a border or a card around it.
+   No radius: a rounded fill under a row that has no border reads as a card
+   that lost its edge, and the rows it sits between are separated by a rule
+   that runs the full width. A square wash is the row lighting up; a pill is a
+   different object appearing. */
+.row {
+  margin-inline: -14px;
+  padding-inline: 14px;
+  transition: background-color 140ms ease;
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background-color: var(--site-row-hover);
+  }
+}
+
+/* ── A row that is one link ───────────────────────────────────────────────
+   A card whose title is a link and whose body is not gives the pointer nothing
+   to say and swallows the click that lands two lines below the title. The
+   title's anchor grows a transparent layer over the whole row instead, so the
+   cursor is a pointer anywhere on it and the click goes to the href the title
+   already names — one real link, still keyboard-reachable, no click handler.
+
+   Everything else interactive in the row is lifted above that layer, or it
+   would be unreachable. The cost is that the row's text cannot be selected by
+   dragging across it, which is the standard trade for this pattern. */
+
+.card-link {
+  position: relative;
+}
+
+.card-link .card-target::after {
+  content: '';
+  inset: 0;
+  position: absolute;
+  z-index: 0;
+}
+
+.card-link a:not(.card-target),
+.card-link button,
+.card-link row-tools {
+  position: relative;
+  z-index: 1;
+}
+
+/* The portrait. On a dark ground Nocturne's elevation is an edge plus ambient
+   darkness rather than a mat and a frame, so this is a hairline and a radius
+   with the picture filling it. */
+.portrait {
+  border-radius: var(--site-radius);
+  box-shadow: 0 0 0 1px var(--ui-color-border);
+  overflow: hidden;
+}
+
+.portrait > * {
+  border-radius: 0;
+}
+
+/* Tag and format chips: Nocturne's `.tag`, filled from the neutral ramp. Not
+   uppercase and not mono — at 11px the letterspacing is what makes it read as
+   a label, and a filled neutral chip beside an accent one is the whole
+   taxonomy the pages need. */
+.chip {
+  background-color: var(--ui-color-surface-raised);
+  border: 1px solid transparent;
+  border-radius: calc(var(--site-radius) * 0.75);
+  color: var(--ui-color-text);
+  display: inline-flex;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    background-color: var(--ui-color-hover);
+  }
+}
+
+/* The outlined variant, for a chip that is a state rather than a fact: a draft,
+   a long read, the filter that is on. Accent as a line, per the system. */
+.chip-on {
+  background-color: transparent;
+  border-color: var(--ui-color-accent);
+  color: var(--ui-color-accent);
+}
+
+@media (hover: hover) {
+  .chip-on:hover {
+    background-color: color-mix(in srgb, var(--ui-color-accent) 12%, transparent);
+    color: var(--ui-color-accent);
+  }
+}
+
+/* A kicker over a block: what the thing below it is, small and in the accent.
+   The tick that used to sit in front of it is gone — the accent on the words
+   is the mark. */
+.eyebrow {
+  color: var(--ui-color-accent);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* The other label: a section heading inside a page, which is the same size and
+   spacing without the accent, because a page with six of them in the accent is
+   a page with six things shouting. */
+.section-label {
+  color: var(--ui-color-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── A release ────────────────────────────────────────────────────────────
+   The cover is ours, at a size worth looking at, and the tracklist under it is
+   ours in our own type. What is left for Bandcamp's iframe is the transport,
+   which is the one thing it does better than we can. `size=large` with
+   `artwork=small` and `tracklist=false` is that player at 120px: a cover
+   thumbnail, the title, and the play and buy controls — no second cover at
+   500px, no second tracklist arguing with ours. */
+
+.release-frame {
+  border-radius: var(--site-radius);
+  box-shadow: 0 0 0 1px var(--ui-color-border);
+  overflow: hidden;
+}
+
+.player-bar {
+  border: 0;
+  border-radius: var(--site-radius);
+  display: block;
+  height: 120px;
+  overflow: hidden;
+  width: 100%;
+}
+
+md-body {
+  display: block;
+}
+
+/* Rendered markdown. Hand-written rather than @tailwindcss/typography: the
+   element set md-body allows is twenty tags, and matching the rest of the page
+   matters more than covering tags this site never emits.
+
+   One measure and one face. 16px Inter at 1.75 over 64ch is the post's whole
+   layout — the images are the only thing allowed wider. */
+.prose-site {
+  color: color-mix(in srgb, var(--ui-color-text) 85%, transparent);
+  font-family: var(--site-font-display);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.prose-site > * + * {
+  margin-top: 1.4em;
+}
+
+/* The measure is on the children rather than on the container, because the one
+   thing on this page allowed to be wider than the words is a photograph: a
+   figure and a gallery take the whole column, everything else takes 64ch. */
+.prose-site > * {
+  max-width: 64ch;
+}
+
+.prose-site > figure,
+.prose-site > .md-gallery,
+.prose-site > hr {
+  max-width: none;
+}
+
+.prose-site h2,
+.prose-site h3,
+.prose-site h4 {
+  color: var(--ui-color-text);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin-top: 2.1em;
+  text-wrap: pretty;
+}
+
+.prose-site h2 {
+  font-size: 1.35em;
+}
+
+.prose-site h3 {
+  font-size: 1.18em;
+}
+
+.prose-site h4 {
+  font-size: 1.05em;
+}
+
+.prose-site a {
+  color: var(--ui-color-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.prose-site a:hover {
+  color: var(--ui-color-primary-hover);
+}
+
+.prose-site strong {
+  font-weight: 600;
+}
+
+.prose-site em {
+  font-style: italic;
+}
+
+/* A pull quote is the one place the accent carries prose, so it takes the deep
+   ramp step rather than the accent itself: at 16px the base accent clears 3:1
+   against the ground, which is a mark's ratio, not a paragraph's. */
+.prose-site blockquote {
+  border-inline-start: 2px solid var(--ui-color-accent);
+  color: var(--site-accent-quiet);
+  font-style: normal;
+  line-height: 1.7;
+  padding-inline-start: 1.1em;
+}
+
+.prose-site ul,
+.prose-site ol {
+  padding-inline-start: 1.35em;
+}
+
+.prose-site ul {
+  list-style: disc;
+}
+
+.prose-site ol {
+  list-style: decimal;
+}
+
+.prose-site li + li {
+  margin-top: 0.3em;
+}
+
+.prose-site code {
+  background: var(--ui-color-surface);
+  border-radius: var(--site-radius-sm);
+  font-family: var(--site-font-mono);
+  font-size: 0.84em;
+  padding: 0.1em 0.35em;
+}
+
+.prose-site pre {
+  background: var(--ui-color-surface);
+  border-radius: var(--site-radius);
+  box-shadow: 0 0 0 1px var(--ui-color-border);
+  overflow-x: auto;
+  padding: 0.9em 1.1em;
+}
+
+.prose-site pre code {
+  background: none;
+  font-size: 0.82em;
+  padding: 0;
+}
+
+/* ── Images in a post ─────────────────────────────────────────────────────
+   A box of the page's proportions with the photograph whole inside it, and the
+   same photograph blurred and darkened behind it filling what the shape leaves
+   over. `max-width: 100%` alone hands a square photograph the whole column,
+   which is a portrait the height of the window; cropping it to a rectangle
+   instead throws away the top and bottom of the picture. This does neither.
+
+   `md-body` reads a `#small`, `#medium` or `#wide` fragment off the image URL
+   and puts the class on the box, so a post can ask for a shorter or taller one
+   without any HTML in the markdown. */
+
+.prose-site figure {
+  margin-inline: auto;
+}
+
+.prose-site .md-frame {
+  align-items: center;
+  border-radius: var(--site-radius);
+  box-shadow: 0 0 0 1px var(--ui-color-border);
+  display: flex;
+  height: 420px;
+  isolation: isolate;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.prose-site .md-frame-fill {
+  background-position: center;
+  background-size: cover;
+  filter: blur(28px) brightness(0.55) saturate(1.15);
+  inset: 0;
+  position: absolute;
+  /* Wider than the box, so the blur has pixels to bleed from at the edges
+     instead of fading into the border. */
+  transform: scale(1.2);
+}
+
+.prose-site .md-frame > img {
+  border: 0;
+  border-radius: 0;
+  height: auto;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  position: relative;
+  width: auto;
+}
+
+.prose-site .md-frame.md-img-small {
+  height: 220px;
+}
+
+.prose-site .md-frame.md-img-medium {
+  height: 320px;
+}
+
+.prose-site .md-frame.md-img-wide {
+  height: 560px;
+}
+
+/* An image inside a sentence, which no box belongs around. */
+.prose-site img {
+  border-radius: var(--site-radius);
+  display: block;
+  height: auto;
+  margin-inline: auto;
+  max-height: 420px;
+  max-width: 100%;
+  width: auto;
+}
+
+/* Two or three images the author put in one paragraph: a row, not a column of
+   three full-size photographs. */
+.prose-site .md-gallery {
+  display: grid;
+  gap: 11px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.prose-site .md-gallery figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.prose-site .md-gallery .md-frame {
+  height: 240px;
+}
+
+.prose-site hr {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--site-rule-soft) 48px,
+    var(--site-rule-soft) calc(100% - 48px),
+    transparent
+  );
+  border: 0;
+  height: 1px;
+  margin-block: 2.4em;
+}
+
+.prose-site table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.prose-site th,
+.prose-site td {
+  border: 1px solid var(--ui-color-border);
+  padding: 0.4em 0.7em;
+  text-align: start;
+}
+
+.prose-site th {
+  background: var(--ui-color-surface);
+  font-weight: 500;
+}
+
+.prose-site figcaption {
+  color: var(--ui-color-text-muted);
+  font-size: 0.72em;
+  letter-spacing: 0.01em;
+  margin-top: 0.55em;
+  text-align: start;
+}
+
+/* ── Editing ──────────────────────────────────────────────────────────────
+   The editors are six forms with the same field, the same label and the same
+   error paragraph in every one of them, and `ui-field` takes its classes as
+   strings. Written once here rather than as forty repeated utility strings in
+   the markup, for the reason `.prose-site` is here: this file is the one
+   stylesheet both the browser JIT and the CLI read. */
+
+/* Anything that can be edited in place is outlined, dashed, in the accent —
+   the one state on the site drawn with a dashed line, so it cannot be mistaken
+   for a border that was always there.
+
+   The inset is here and not in the markup. It used to be `-mx-3.5 px-3.5 py-3`
+   repeated at four call sites, which is four chances for them to drift, and
+   they had: the dashed box round a project row, a CV entry, a release and the
+   rail's profile were each measured from a different edge. One rule, one
+   distance, every page.
+
+   `display` is deliberately not set: three of the four call sites are flex
+   containers and the box is the same element as the layout. */
+.edit-target {
+  --edit-inset: 12px;
+  background-color: color-mix(in srgb, var(--ui-color-accent) 4%, transparent);
+  border-radius: var(--site-radius);
+  margin-inline: calc(var(--edit-inset) * -1);
+  outline: 1px dashed color-mix(in srgb, var(--ui-color-accent) 38%, transparent);
+  padding: var(--edit-inset);
+  transition:
+    background-color 140ms ease,
+    outline-color 140ms ease;
+}
+
+/* The pointer answers on the box, not on a row wash underneath it: in edit mode
+   the row is the editable unit, so `.row`'s hover is off wherever this is on and
+   this is the only thing that lights up. */
+@media (hover: hover) {
+  .edit-target:hover {
+    background-color: color-mix(in srgb, var(--ui-color-accent) 9%, transparent);
+    outline-color: var(--ui-color-accent);
+  }
+}
+
+/* Reached by keyboard, the box says so too — otherwise tabbing into a row's
+   tools moves the focus ring with nothing around it to say what it belongs to. */
+.edit-target:focus-within {
+  outline-color: var(--ui-color-accent);
+}
+
+/* The rail is 252px wide with 20px of page beside it, so it gets the inset one
+   step down. Scoped to the element rather than set as a class in the template:
+   an arbitrary-property utility is compiled from what Tailwind can see, and in
+   dev mode it never sees a template that is fetched at runtime. */
+links-editor .edit-target,
+links-editor .edit-open {
+  --edit-inset: 8px;
+}
+
+/* The cluster of icon buttons on an editable row. Its own class because the
+   gap between the tools and the gap between the tools and the content are two
+   different measurements, and every row got them right only by copying. */
+.edit-tools {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.edit-panel {
+  --edit-panel-pad: 14px;
+  background: var(--ui-color-surface);
+  border-radius: var(--site-radius);
+  box-shadow: 0 0 0 1px var(--ui-color-border);
+  padding: var(--edit-panel-pad);
+}
+
+/* An editor that opened in place of a row stands where that row's dashed box
+   stood, not where the text column starts — otherwise saving and cancelling
+   moves the block 12px sideways under the pointer. Same inset, same edge. */
+.edit-open {
+  display: block;
+  margin-inline: calc(var(--edit-inset, 12px) * -1);
+}
+
+.edit-grid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .edit-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.edit-label {
+  color: color-mix(in srgb, var(--ui-color-text) 70%, transparent);
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.edit-input,
+.edit-area {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--site-radius);
+  caret-color: var(--ui-color-accent);
+  color: var(--ui-color-text);
+  display: block;
+  font: inherit;
+  font-size: 14px;
+  min-height: 36px;
+  padding: 6px 10px;
+  width: 100%;
+}
+
+.edit-area {
+  line-height: 1.6;
+  min-height: 90px;
+  resize: vertical;
+}
+
+.edit-input:hover,
+.edit-area:hover {
+  border-color: color-mix(in srgb, var(--ui-color-text) 45%, transparent);
+}
+
+.edit-input:focus,
+.edit-area:focus {
+  border-color: var(--ui-color-accent);
+  outline: none;
+}
+
+.edit-input[aria-invalid='true'],
+.edit-area[aria-invalid='true'] {
+  border-color: var(--site-danger);
+}
+
+.edit-input:disabled,
+.edit-area:disabled {
+  opacity: 0.45;
+}
+
+.edit-error {
+  color: var(--site-danger);
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.edit-hint {
+  color: var(--ui-color-text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.edit-check {
+  align-items: center;
+  color: var(--ui-color-text);
+  display: flex;
+  font-size: 14px;
+  gap: 7px;
+}
+
+/* Save and cancel, at the foot of every editor. The rule above them is what
+   separates the buttons from the last field: without it the pair reads as one
+   more row of the form. It is inset by the panel's own padding so it runs the
+   panel's full width rather than the form's. */
+.edit-actions {
+  --pad: var(--edit-panel-pad, 0px);
+  border-top: 1px solid var(--site-rule-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-inline: calc(var(--pad) * -1);
+  margin-top: var(--pad);
+  padding: var(--pad) var(--pad) 0;
+}
+
+/* A block that is a group of rows in a form — a list of links, a set of
+   sub-fields — labelled and separated from the fields above it. */
+.edit-group {
+  display: grid;
+  gap: 8px;
+}
+
+.edit-row {
+  align-items: start;
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────
+   Nocturne's primary action is an accent outline on transparent, never a
+   filled rectangle: the accent is a line here, and a solid accent button at
+   the top of a page of hairlines is the one element that would not belong to
+   the same drawing. */
+
+.btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--site-radius);
+  color: var(--ui-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  padding: 6px 11px;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.btn-primary {
+  border-color: var(--ui-color-accent);
+  color: var(--ui-color-accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--ui-color-accent) 12%, transparent);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--ui-color-accent) 22%, transparent);
+}
+
+.btn-quiet {
+  border-color: var(--ui-color-border);
+  color: var(--ui-color-text-muted);
+}
+
+.btn-quiet:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--ui-color-text) 7%, transparent);
+  color: var(--ui-color-text);
+}
+
+.btn-danger {
+  border-color: var(--ui-color-border);
+  color: var(--site-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--site-danger) 12%, transparent);
+}
+
+.btn-icon {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--site-radius);
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  padding: 6px;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--ui-color-text) 7%, transparent);
+  color: var(--ui-color-text);
+}
+
+.btn-icon:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+/* A destructive icon button that has been armed and is waiting for the second
+   click. The danger colour is a line and a glyph here, not a fill, for the same
+   reason the primary action is. */
+.btn-armed {
+  border-color: var(--site-danger);
+  color: var(--site-danger);
+}
+
+.btn-armed:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--site-danger) 12%, transparent);
+  color: var(--site-danger);
+}
+
+/* Interaction states are the system's, not the browser's. */
+:focus-visible {
+  outline: 2px solid var(--ui-color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ui-color-accent) 30%, transparent);
+}
+
+image-field,
+md-editor {
+  display: block;
+}

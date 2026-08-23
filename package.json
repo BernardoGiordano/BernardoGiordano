@@ -1,0 +1,26 @@
+{
+  "name": "santella-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal site: projects, art, CV and blog, built on srl",
+  "license": "MIT",
+  "scripts": {
+    "start": "node tools/dev/serve.mjs --open",
+    "serve": "node tools/dev/serve.mjs",
+    "css": "tailwindcss -i ./web/src/app.css -o ./web/app.css --minify",
+    "css:watch": "tailwindcss -i ./web/src/app.css -o ./web/app.css --watch",
+    "importmap": "node tools/dev/importmap.mjs --check"
+  },
+  "dependencies": {
+    "@srljs/core": "0.1.0",
+    "dompurify": "3.4.14",
+    "marked": "18.0.10"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.11",
+    "lucide-static": "1.33.0",
+    "simple-icons": "16.28.0",
+    "tailwindcss": "4.1.11"
+  }
+}

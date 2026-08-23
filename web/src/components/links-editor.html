@@ -1,0 +1,63 @@
+<div>
+  <!-- The rail's rows get the same dashed box as a project row or a CV entry.
+       They used to be the one editable thing on the site with no outline round
+       it, which made the rail look like a different application from the column
+       beside it. site.css steps `--edit-inset` down for this element, because
+       252px of column cannot spend 12px an edge. -->
+  <ul class="flex flex-col gap-1">
+    <li *for="link of links; key: link.id">
+      <link-form
+        *if="isEditing(link)"
+        class="edit-open"
+        [.record]="link"
+        (saved)="close()"
+        (cancelled)="close()"
+      ></link-form>
+
+      <div *else class="edit-target flex items-center gap-2">
+        <span class="flex min-w-0 flex-1 items-center gap-2.5 text-[13px] text-muted">
+          <svg
+            *if="isBrandIcon(link.kind)"
+            viewBox="0 0 24 24"
+            class="size-[15px] shrink-0"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path [d]="icon(link.kind)"></path>
+          </svg>
+          <svg
+            *else
+            viewBox="0 0 24 24"
+            class="size-[15px] shrink-0"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path [d]="icon(link.kind)"></path>
+          </svg>
+          <span class="meta truncate">{{ handle(link) }}</span>
+        </span>
+
+        <row-tools
+          class="edit-tools"
+          [.can-up]="canMoveUp(link)"
+          [.can-down]="canMoveDown(link)"
+          [.busy]="isBusy(link)"
+          (edit)="open(link)"
+          (move-up)="move(link, -1)"
+          (move-down)="move(link, 1)"
+          (remove)="discard(link)"
+        ></row-tools>
+      </div>
+    </li>
+  </ul>
+
+  <link-form *if="isAdding" class="edit-open mt-2" (saved)="close()" (cancelled)="close()"></link-form>
+
+  <button *else type="button" class="btn btn-quiet mt-2" (click)="openNew()">+ {{ t('editor.addLink') }}</button>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+</div>

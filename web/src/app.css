@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+/* The browser JIT compiles what it finds in the document and never reads this
+   file; the CLI reads this file and never sees index.html's inline block. Two
+   modes, two entry points, the same tokens. */
+@source '../index.html';
+@source './**/*.{js,html}';
+
+/* The theme controller writes `data-theme` on the document, so Tailwind's own
+   `dark:` — which reads `prefers-color-scheme` — would disagree with the
+   chosen theme. Point the variant at the attribute instead. */
+@custom-variant dark ([data-theme='dark'] &);
+
+@theme inline {
+  --color-canvas: var(--ui-color-canvas);
+  --color-surface: var(--ui-color-surface);
+  --color-surface-raised: var(--ui-color-surface-raised);
+  --color-ink: var(--ui-color-text);
+  --color-muted: var(--ui-color-text-muted);
+  --color-ui-border: var(--ui-color-border);
+  --color-brand: var(--ui-color-primary);
+  --color-brand-hover: var(--ui-color-primary-hover);
+  --color-brand-contrast: var(--ui-color-primary-contrast);
+  --color-accent: var(--ui-color-accent);
+  --color-accent-strong: var(--ui-color-accent-strong);
+  --color-accent-quiet: var(--site-accent-quiet);
+  --color-rule: var(--site-rule);
+  --color-overlay: var(--ui-color-overlay);
+  --font-display: var(--site-font-display);
+  --font-mono: var(--site-font-mono);
+}

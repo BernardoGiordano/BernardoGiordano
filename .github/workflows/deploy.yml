@@ -1,0 +1,93 @@
+name: Deploy santella.dev
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  WEB_DIR: /home/ubuntu/www/santella.dev
+  APP_DIR: /home/ubuntu/apps/santella.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Fails when index.html's import map and the installed @srljs/core disagree,
+      # or when a vendored bundle does not match the hash index.html pins. Both are
+      # load failures in the browser rather than build failures, so they have to be
+      # caught here.
+      - name: Check the import map
+        run: npm run importmap
+
+      - name: Build
+        run: node tools/build.mjs
+
+      # Plain ssh rather than a third-party action: the whole deployment is two
+      # rsyncs and one restart, and this way the credential never leaves the job.
+      - name: Authorise
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          HOST: ${{ secrets.HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Push the static tree
+        env:
+          TARGET: ${{ secrets.USERNAME }}@${{ secrets.HOST }}
+        run: |
+          rsync -az --delete --checksum \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            dist/ "$TARGET:${WEB_DIR}/"
+
+      - name: Push the application
+        env:
+          TARGET: ${{ secrets.USERNAME }}@${{ secrets.HOST }}
+        run: |
+          rsync -az --delete \
+            --exclude '.venv' --exclude 'media' --exclude '.env.local' --exclude '__pycache__' \
+            -e "ssh -i ~/.ssh/id_deploy" \
+            api/ "$TARGET:${APP_DIR}/api/"
+
+      # `init-db` is CREATE TABLE IF NOT EXISTS throughout, so running it on every
+      # deploy applies a new table and does nothing otherwise. A column change is
+      # still a hand-written ALTER; this is not a migration framework and does not
+      # pretend to be one.
+      - name: Install, migrate, restart
+        env:
+          TARGET: ${{ secrets.USERNAME }}@${{ secrets.HOST }}
+        run: |
+          ssh -i ~/.ssh/id_deploy "$TARGET" bash -euo pipefail <<REMOTE
+            cd ${APP_DIR}/api
+            test -d .venv || python3 -m venv .venv
+            .venv/bin/pip install --quiet --upgrade pip
+            .venv/bin/pip install --quiet -r requirements.txt
+            set -a; . /home/ubuntu/apps/santella.dev/api.env; set +a
+            .venv/bin/python tools/manage.py init-db
+            sudo supervisorctl restart santella-api
+          REMOTE
+
+      - name: Verify
+        env:
+          TARGET: ${{ secrets.USERNAME }}@${{ secrets.HOST }}
+        run: |
+          sleep 5
+          ssh -i ~/.ssh/id_deploy "$TARGET" \
+            'curl -fsS -o /dev/null -w "api %{http_code}\n" http://127.0.0.1:8001/api/site'
+          curl -fsS -o /dev/null -w "site %{http_code}\n" https://santella.dev/projects

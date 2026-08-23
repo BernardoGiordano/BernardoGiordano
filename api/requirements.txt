@@ -1,0 +1,8 @@
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+PyMySQL==1.2.0
+DBUtils==3.1.2
+argon2-cffi==25.1.0
+pillow==12.3.0
+python-multipart==0.0.32
+httpx==0.28.1

@@ -1,0 +1,115 @@
+<form class="edit-panel" (submit)="submit($event)">
+  <div class="edit-grid">
+    <ui-field
+      name="title"
+      required
+      label="{{ t('editor.postTitle') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.title"
+    >
+      <input class="edit-input" (input)="titleTyped($event)" />
+    </ui-field>
+
+    <ui-field
+      name="slug"
+      required
+      label="{{ t('editor.slug') }}"
+      hint="{{ t('editor.slugHint') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      hint-class="edit-hint"
+      [.field]="form.fields.slug"
+    >
+      <input class="edit-input font-mono text-[12.5px]" (input)="slugTyped()" />
+    </ui-field>
+
+    <ui-field
+      name="summary"
+      label="{{ t('editor.summary') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.summary"
+    >
+      <textarea rows="2" class="edit-area"></textarea>
+    </ui-field>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
+        name="publishedOn"
+        required
+        label="{{ t('editor.publishedOn') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.publishedOn"
+      >
+        <input class="edit-input" type="date" />
+      </ui-field>
+
+      <ui-field
+        name="language"
+        label="{{ t('editor.language') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        [.field]="form.fields.language"
+      >
+        <select class="edit-input">
+          <option *for="code of languages; key: code" [value]="code">{{ code }}</option>
+        </select>
+      </ui-field>
+    </div>
+
+    <ui-field
+      name="tags"
+      label="{{ t('editor.tags') }}"
+      hint="{{ t('editor.listHint') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      hint-class="edit-hint"
+      [.field]="form.fields.tags"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="coverUrl"
+      label="{{ t('editor.cover') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.coverUrl"
+    >
+      <image-field purpose="cover" preview-class="h-[68px] w-[120px]"></image-field>
+    </ui-field>
+
+    <label class="edit-check">
+      <input
+        type="checkbox"
+        [.checked]="form.fields.draft.value"
+        [?disabled]="form.disabled"
+        (change)="form.fields.draft.setValue($event.target.checked)"
+      />
+      {{ t('editor.draft') }}
+    </label>
+
+    <ui-field
+      name="body"
+      label="{{ t('editor.body') }}"
+      hint="{{ t('editor.bodyHint') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      hint-class="edit-hint"
+      [.field]="form.fields.body"
+    >
+      <md-editor [rows]="20"></md-editor>
+    </ui-field>
+  </div>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <div class="edit-actions">
+    <button type="submit" class="btn btn-primary" [?disabled]="busy">
+      {{ busy ? t('editor.saving') : t('site.save') }}
+    </button>
+    <button type="button" class="btn btn-quiet" (click)="cancel()" [?disabled]="busy">{{ t('site.cancel') }}</button>
+  </div>
+</form>

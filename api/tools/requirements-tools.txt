@@ -1,0 +1,2 @@
+# Only the importers need these; the running service does not.
+PyYAML==6.0.3
