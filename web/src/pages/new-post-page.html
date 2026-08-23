@@ -1,0 +1,7 @@
+<div>
+  <a href="/blog" class="text-[12.5px] font-medium text-muted hover:text-ink">← {{ t('blog.back') }}</a>
+
+  <h1 class="display mt-4 mb-4 text-[22px] text-ink">{{ t('blog.newPost') }}</h1>
+
+  <post-editor (saved)="saved($event)" (cancelled)="cancel()"></post-editor>
+</div>

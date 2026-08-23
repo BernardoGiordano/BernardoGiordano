@@ -1,0 +1,132 @@
+<section>
+  <div *if="canEdit" class="mb-6 flex items-center gap-3">
+    <button *if="!isAddingSection" type="button" class="btn btn-quiet" (click)="addSection()">
+      + {{ t('editor.addSection') }}
+    </button>
+    <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+  </div>
+
+  <cv-section-editor
+    *if="isAddingSection"
+    class="edit-open mb-8"
+    (saved)="close()"
+    (cancelled)="close()"
+  ></cv-section-editor>
+
+  <p *if="isLoading && !sections.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
+
+  <!-- Years in the margin and nothing in a box: the period is a column of its
+       own, right-aligned against the entry it belongs to, so the dates line up
+       down the page and the titles start at one edge. -->
+  <div class="rule-list flex flex-col">
+    <div *for="section of sections; key: section.id" class="pt-8 pb-8 first:pt-0 last:pb-0">
+      <cv-section-editor
+        *if="isEditingSection(section)"
+        class="edit-open"
+        [.record]="section"
+        (saved)="close()"
+        (cancelled)="close()"
+      ></cv-section-editor>
+
+      <!-- A section heading is editable too, so in edit mode it gets the same
+           dashed box as the entries under it. It used to carry the tools with no
+           outline round them, which read as a heading that had grown buttons
+           rather than as a thing that could be edited. -->
+      <div *else class="flex items-center justify-between gap-3 {{ canEdit ? 'edit-target' : '' }}">
+        <h2 class="section-label">{{ section.title }}</h2>
+
+        <row-tools
+          *if="canEdit"
+          class="edit-tools"
+          [.can-up]="canMoveUp(section)"
+          [.can-down]="canMoveDown(section)"
+          [.busy]="isBusy(section)"
+          (edit)="editSection(section)"
+          (move-up)="moveSection(section, -1)"
+          (move-down)="moveSection(section, 1)"
+          (remove)="removeSection(section)"
+        ></row-tools>
+      </div>
+
+      <!-- The gap closes by most of the box's inset in edit mode, so two entries
+           stay about as far apart as they read — and the 8px left over keeps two
+           dashed outlines from touching. -->
+      <ul class="mt-6 flex flex-col {{ canEdit ? 'gap-2' : 'gap-7' }}">
+        <li *for="item of section.items; key: item.id">
+          <cv-item-editor
+            *if="isEditingItem(item)"
+            class="edit-open"
+            [.record]="item"
+            [.section]="section.id"
+            (saved)="close()"
+            (cancelled)="close()"
+          ></cv-item-editor>
+
+          <div *else class="flex flex-col gap-2 sm:flex-row sm:gap-7 {{ canEdit ? 'edit-target' : '' }}">
+            <!-- The margin column carries the period, and for an entry that has
+                 none — a competence rather than a job — it carries the title
+                 instead. That is what keeps the left edge of the page a single
+                 column of labels and the right edge a single column of prose. -->
+            <p class="shrink-0 pt-1 text-[12.5px] leading-snug tabular-nums text-ink/52 sm:w-[96px] sm:text-end">
+              {{ item.period || item.title }}
+            </p>
+
+            <div class="min-w-0 flex-1">
+              <div class="flex items-start justify-between gap-3">
+                <p *if="item.period" class="display text-[20px] text-ink">{{ item.title }}</p>
+
+                <!-- `ms-auto`, not `justify-between` alone: an entry with no
+                     period draws no title in this column, and a lone child of a
+                     `justify-between` row sits at its start — which put the
+                     tools in the middle of the page on every skills entry. -->
+                <row-tools
+                  *if="canEdit"
+                  class="edit-tools ms-auto"
+                  [.can-up]="canItemUp(section, item)"
+                  [.can-down]="canItemDown(section, item)"
+                  [.busy]="isItemBusy(item)"
+                  (edit)="editItem(section, item)"
+                  (move-up)="moveItem(section, item, -1)"
+                  (move-down)="moveItem(section, item, 1)"
+                  (remove)="removeItem(section, item)"
+                ></row-tools>
+              </div>
+
+              <p *if="item.subtitle" class="mt-1 text-[13px] text-ink/50">{{ item.subtitle }}</p>
+              <p
+                *if="item.detail"
+                class="mt-2.5 text-[13.5px] leading-relaxed whitespace-pre-line text-ink/72"
+              >
+                {{ item.detail }}
+              </p>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <cv-item-editor
+        *if="isAddingItem(section)"
+        class="edit-open mt-5"
+        [.section]="section.id"
+        (saved)="close()"
+        (cancelled)="close()"
+      ></cv-item-editor>
+
+      <button
+        *if="canEdit && !isAddingItem(section)"
+        type="button"
+        class="btn btn-quiet mt-4"
+        (click)="addItem(section)"
+      >
+        + {{ t('cv.addItem') }}
+      </button>
+    </div>
+  </div>
+
+  <p *if="!isLoading && !sections.length" class="py-6 text-[13px] text-muted">{{ t('cv.empty') }}</p>
+
+  <div *if="sections.length" class="mt-10">
+    <hr class="grad-rule" />
+    <p class="mt-5 text-[12.5px] text-ink/50">{{ t('cv.fullCopy') }}</p>
+  </div>
+</section>

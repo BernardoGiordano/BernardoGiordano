@@ -1,0 +1,113 @@
+<!-- `edit-panel`, like every other editor on the site. This one form was a bare
+     grid on the page: no surface behind it, no padding round it, so the rail's
+     one form sat at a different inset from the five that open in the column. -->
+<form class="edit-panel" (submit)="submit($event)">
+  <div class="edit-grid">
+    <div>
+      <span class="edit-label">{{ t('editor.avatar') }}</span>
+      <div class="flex items-center gap-3">
+        <div class="portrait size-[56px] shrink-0 bg-surface-raised">
+          <img *if="avatarUrl" [src]="avatarUrl" alt="" class="size-full object-cover" />
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn btn-quiet" (click)="openCropper()">{{ t('editor.replaceImage') }}</button>
+          <button *if="avatarUrl" type="button" class="btn btn-quiet" (click)="clearAvatar()">
+            {{ t('editor.removeImage') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ui-field
+      name="name"
+      required
+      label="{{ t('editor.name') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.name"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="headline"
+      label="{{ t('editor.headline') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.headline"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="bio"
+      label="{{ t('editor.bio') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.bio"
+    >
+      <textarea rows="4" class="edit-area"></textarea>
+    </ui-field>
+
+    <ui-field
+      name="current"
+      label="{{ t('editor.current') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.current"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="now"
+      label="{{ t('editor.now') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.now"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="available"
+      label="{{ t('editor.available') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.available"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="location"
+      label="{{ t('editor.location') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.location"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="email"
+      label="{{ t('editor.email') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.email"
+    >
+      <input class="edit-input" type="email" />
+    </ui-field>
+  </div>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <div class="edit-actions">
+    <button type="submit" class="btn btn-primary" [?disabled]="busy">
+      {{ busy ? t('editor.saving') : t('site.save') }}
+    </button>
+    <button type="button" class="btn btn-quiet" (click)="cancel()" [?disabled]="busy">{{ t('site.cancel') }}</button>
+  </div>
+
+  <avatar-cropper [.open]="cropping" (close)="closeCropper()" (cropped)="cropped($event)"></avatar-cropper>
+</form>

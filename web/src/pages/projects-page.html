@@ -1,0 +1,145 @@
+<section>
+  <div *if="canEdit" class="mb-6 flex items-center gap-3">
+    <button *if="!isCreating" type="button" class="btn btn-quiet" (click)="openNew()">
+      + {{ t('projects.addProject') }}
+    </button>
+    <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+  </div>
+
+  <project-editor
+    *if="isCreating"
+    class="edit-open mb-8"
+    (saved)="close()"
+    (cancelled)="close()"
+  ></project-editor>
+
+  <p *if="isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
+
+  <!-- No cards, no borders, no grid. A title at 25px and one muted line of
+       facts under the description: the type is the whole layout, and the fading
+       rule between two rows is the only graphic on the page. -->
+  <!-- `card-link row` is off in edit mode on purpose. `.card-link` grows a
+       transparent anchor over the whole row, which in edit mode meant the dashed
+       box — the thing that says "click me to edit" — opened GitHub instead; and
+       `.row`'s hover wash under the box's own hover was two washes answering one
+       pointer. The row padding drops by the box's inset so the list does not
+       reflow when the handles appear. -->
+  <ul class="rule-list flex flex-col">
+    <li *for="project of rows; key: project.id" class="{{ canEdit ? 'py-4' : 'card-link row py-7' }}">
+      <project-editor
+        *if="isEditing(project)"
+        class="edit-open"
+        [.record]="project"
+        (saved)="close()"
+        (cancelled)="close()"
+      ></project-editor>
+
+      <div *else class="{{ canEdit ? 'edit-target' : '' }}">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+            <h2 class="display text-[22px] text-ink sm:text-[25px]">
+              <!-- `.card-target` is what makes the whole row clickable: the
+                   anchor grows a transparent layer over it, so the pointer is
+                   a pointer everywhere and the click lands here. -->
+              <a
+                *if="cardUrl(project)"
+                [href]="cardUrl(project)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="card-target transition-colors hover:text-brand"
+              >
+                {{ project.name }}
+              </a>
+              <span *else>{{ project.name }}</span>
+            </h2>
+
+            <!-- Only a status worth reading: every row is active until it says
+                 otherwise, and a label on all four of them is a column of noise
+                 rather than a fact about any one. -->
+            <span
+              *if="project.status !== 'active'"
+              class="text-[11px] tracking-[0.1em] uppercase {{ statusClasses(project) }}"
+            >
+              {{ statusLabel(project) }}
+            </span>
+
+            <!-- One right-aligned group, not two. Both the star button and the
+                 edit tools used to carry `ms-auto`, and the second one after the
+                 first does nothing — which is why the star pill sat against the
+                 title instead of at the end of the row as soon as edit mode was
+                 on. -->
+            <div class="ms-auto flex shrink-0 items-center gap-2">
+              <a
+                *if="repoUrl(project)"
+                [href]="repoUrl(project)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-primary shrink-0 px-2.5 py-[3px] text-[12px]"
+                [title]="t('projects.starIt')"
+              >
+                <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path [d]="icon('star')"></path>
+                </svg>
+                {{ t('projects.star') }}
+                <span class="tabular-nums opacity-55">{{ count(project.stats?.stars ?? 0) }}</span>
+              </a>
+
+              <div *if="canEdit" class="edit-tools">
+                <button
+                  *if="project.repo"
+                  type="button"
+                  class="btn-icon"
+                  (click)="refresh(project)"
+                  [?disabled]="isBusy(project)"
+                  [aria-label]="t('projects.refreshStats')"
+                  [title]="t('projects.refreshStats')"
+                >
+                  <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path [d]="icon('refreshCw')"></path>
+                  </svg>
+                </button>
+
+                <row-tools
+                  [.can-up]="canMoveUp(project)"
+                  [.can-down]="canMoveDown(project)"
+                  [.busy]="isBusy(project)"
+                  (edit)="open(project)"
+                  (move-up)="move(project, -1)"
+                  (move-down)="move(project, 1)"
+                  (remove)="discard(project)"
+                ></row-tools>
+              </div>
+            </div>
+          </div>
+
+          <p class="mt-2.5 max-w-[66ch] text-[14px] leading-relaxed text-ink/72 text-pretty">
+            {{ project.description }}
+          </p>
+
+          <!-- One line, not a row of chips over a row of icons: what it runs on,
+               a dash, and what it has done. Everything in it is a fact GitHub
+               reported or a platform the record names, so it reads as a
+               catalogue entry rather than as a badge collection. -->
+          <p class="meta mt-3 text-ink/55">{{ facts(project) }}</p>
+        </div>
+      </div>
+    </li>
+  </ul>
+
+  <div *if="rows.length && githubUrl" class="mt-8">
+    <hr class="grad-rule mb-5" />
+    <a
+      [href]="githubUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center gap-1.5 text-[12.5px] text-ink/58 transition-colors hover:text-brand"
+    >
+      {{ t('projects.more') }}
+      <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path [d]="icon('arrowUpRight')"></path>
+      </svg>
+    </a>
+  </div>
+
+  <p *if="!isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('projects.empty') }}</p>
+</section>

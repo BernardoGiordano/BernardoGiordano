@@ -1,0 +1,187 @@
+<div class="mx-auto max-w-[1060px] px-5 sm:px-8">
+  <div class="lg:grid lg:grid-cols-[minmax(0,252px)_minmax(0,1fr)] lg:gap-14">
+    <!-- Pinned, not sticky-until-it-runs-out: the rail stays where it is and the
+         column on the right is the only thing that moves. `max-h` rather than
+         `h`, so it scrolls inside itself only when it is actually taller than the
+         window — which, outside edit mode, it is not.
+
+         The padding and the negative margin that cancels it are one measurement:
+         `overflow-y` other than `visible` makes `overflow-x` a scroll container
+         too, and everything the rail can edit is drawn wider than the text it
+         sits on — `.edit-target`'s dashed box and `.edit-open`'s panel both reach
+         outwards with a negative margin. Without room inside the container that
+         box is cut off on the left and scrollable on the right. The padding gives
+         it that room, the negative margin spends it on the page gutter and the
+         grid gap, and the rail's own column stays exactly where it was, so
+         turning edit mode on moves nothing. -->
+    <aside class="no-scrollbar pt-9 lg:sticky lg:top-0 lg:-mx-4 lg:max-h-screen lg:overflow-y-auto lg:px-4 lg:pt-14 lg:pb-8">
+      <profile-card></profile-card>
+
+      <div *if="isEditing" class="mt-5">
+        <hr class="rule-tight mb-4" />
+        <links-editor></links-editor>
+      </div>
+
+      <nav *else class="mt-5" [aria-label]="t('site.name')">
+        <hr class="rule-tight mb-4" />
+
+        <!-- Phone and tablet: icons only, in a row. The handle beside each one is
+             the rail's information and a masthead has no column for it. -->
+        <ul class="flex flex-wrap gap-1 lg:hidden">
+          <li *for="link of links; key: link.id">
+            <a
+              [href]="link.url"
+              target="_blank"
+              rel="me noopener noreferrer"
+              class="btn-icon border-transparent"
+              [title]="link.label"
+              [aria-label]="link.label"
+            >
+              <svg *if="isBrandIcon(link.kind)" viewBox="0 0 24 24" class="size-[17px]" fill="currentColor" aria-hidden="true">
+                <path [d]="icon(link.kind)"></path>
+              </svg>
+              <svg *else viewBox="0 0 24 24" class="size-[17px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path [d]="icon(link.kind)"></path>
+              </svg>
+            </a>
+          </li>
+        </ul>
+
+        <ul class="hidden lg:flex lg:flex-col lg:gap-2">
+          <li *for="link of links; key: link.id">
+            <a
+              [href]="link.url"
+              target="_blank"
+              rel="me noopener noreferrer"
+              class="group flex items-center gap-2.5 text-[13.5px] text-ink transition-colors hover:text-brand"
+              [title]="link.label"
+            >
+              <svg
+                *if="isBrandIcon(link.kind)"
+                viewBox="0 0 24 24"
+                class="size-[16px] shrink-0 text-ink/58 transition-colors group-hover:text-brand"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path [d]="icon(link.kind)"></path>
+              </svg>
+              <svg
+                *else
+                viewBox="0 0 24 24"
+                class="size-[16px] shrink-0 text-ink/58 transition-colors group-hover:text-brand"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path [d]="icon(link.kind)"></path>
+              </svg>
+              <span class="truncate">{{ handle(link) }}</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <hr class="rule-tight mt-6 hidden lg:block" />
+
+      <div class="mt-4 flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          (click)="toggleTheme()"
+          [aria-label]="t('site.theme')"
+          [title]="t('site.theme')"
+          class="btn-icon"
+        >
+          <svg viewBox="0 0 24 24" class="size-[15px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [d]="icon(themeIcon)"></path>
+          </svg>
+        </button>
+
+        <button
+          *if="profile?.email"
+          type="button"
+          (click)="copyEmail()"
+          [aria-label]="t('site.copyEmail')"
+          [title]="copied ? t('site.copied') : t('site.copyEmail')"
+          class="btn-icon"
+        >
+          <svg *if="copied" viewBox="0 0 24 24" class="size-[15px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [d]="icon('check')"></path>
+          </svg>
+          <svg *else viewBox="0 0 24 24" class="size-[15px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [d]="icon('mail')"></path>
+          </svg>
+        </button>
+
+        <a href="/feed.xml" [aria-label]="t('site.feed')" [title]="t('site.feed')" class="btn-icon">
+          <svg viewBox="0 0 24 24" class="size-[15px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path [d]="icon('rss')"></path>
+          </svg>
+        </a>
+      </div>
+
+      <p class="mt-6 hidden text-[10px] tracking-[0.14em] text-ink/40 uppercase lg:block">
+        <a href="https://github.com/BernardoGiordano/srl" target="_blank" rel="noopener noreferrer" class="hover:text-brand">
+          {{ t('site.builtWith') }}
+        </a>
+      </p>
+    </aside>
+
+    <div class="mt-10 min-w-0 pb-24 lg:mt-0 lg:pt-14">
+      <nav class="bar-blur sticky top-0 z-10 -mx-5 flex gap-6 px-5 pt-3 sm:-mx-3.5 sm:gap-7 sm:px-3.5">
+        <a
+          *for="tab of tabs; key: tab.key"
+          [href]="tab.path"
+          class="relative shrink-0 pb-2 text-[11.5px] tracking-[0.12em] uppercase transition-colors {{ tabClasses(tab.key) }}"
+          [aria-current]="activeTab === tab.key ? 'page' : ''"
+        >
+          {{ t('nav.' + tab.key) }}
+          <span *if="activeTab === tab.key" class="tab-mark"></span>
+        </a>
+
+        <!-- The far end of the bar: the two numbers the projects add up to, and
+             — for the one person who can sign in — the switch that turns the
+             page's handles on and the way back out. All three on the tab row
+             because that row is pinned: the edit switch used to be a band above
+             the page and a second copy at the foot of the rail, which meant
+             leaving edit mode was a scroll away from wherever you were. -->
+        <div *if="hasTotals || canEdit" class="ms-auto flex shrink-0 items-center gap-3 pb-1.5">
+          <span *if="hasTotals" class="hidden text-[12px] tabular-nums text-ink/52 sm:inline">
+            {{ totalsLine }}
+          </span>
+
+          <div *if="canEdit" class="flex items-center gap-1.5">
+            <button
+              type="button"
+              (click)="toggleEditing()"
+              class="btn {{ isEditing ? 'btn-primary' : 'btn-quiet' }} px-2 py-1"
+              [aria-pressed]="isEditing ? 'true' : 'false'"
+              [title]="isEditing ? t('site.editOff') : t('site.edit')"
+            >
+              <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path [d]="icon(isEditing ? 'check' : 'pencil')"></path>
+              </svg>
+              <span class="hidden sm:inline">{{ isEditing ? t('site.editOff') : t('site.edit') }}</span>
+            </button>
+
+            <button
+              type="button"
+              (click)="signOut()"
+              class="btn-icon p-1.5"
+              [aria-label]="t('site.signOut')"
+              [title]="t('site.signOut')"
+            >
+              <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path [d]="icon('logOut')"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <x-route-outlet class="block pt-10"></x-route-outlet>
+    </div>
+  </div>
+</div>

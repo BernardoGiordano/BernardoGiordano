@@ -1,0 +1,51 @@
+<ui-dialog
+  [.open]="open"
+  label="{{ t('editor.cropTitle') }}"
+  panel-class="w-full max-w-[340px] rounded-[var(--site-radius)] border border-ui-border bg-surface p-4 shadow-xl"
+  (close)="dismiss()"
+>
+  <h2 class="display text-[16px] text-ink">{{ t('editor.cropTitle') }}</h2>
+
+  <div *if="!hasImage" class="mt-4">
+    <p class="text-[12.5px] text-muted">{{ t('editor.cropHint') }}</p>
+    <button type="button" class="btn btn-primary mt-3" (click)="choose()">{{ t('editor.chooseImage') }}</button>
+  </div>
+
+  <div *else class="mt-3">
+    <canvas
+      [width]="frame"
+      [height]="frame"
+      class="block cursor-grab touch-none rounded-2xl border border-ui-border bg-surface-raised"
+      (pointerdown)="grab($event)"
+      (pointermove)="drag($event)"
+      (pointerup)="release()"
+      (pointercancel)="release()"
+    ></canvas>
+
+    <label class="mt-3 block">
+      <span class="edit-label">{{ t('editor.zoom') }}</span>
+      <input
+        type="range"
+        min="1"
+        [max]="maxZoom"
+        step="0.02"
+        [.value]="zoom"
+        class="w-full"
+        (input)="setZoom($event)"
+      />
+    </label>
+
+    <button type="button" class="btn btn-quiet mt-1" (click)="choose()">{{ t('editor.chooseImage') }}</button>
+  </div>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <div class="edit-actions">
+    <button type="button" class="btn btn-primary" (click)="apply()" [?disabled]="busy || !hasImage">
+      {{ applyLabel }}
+    </button>
+    <button type="button" class="btn btn-quiet" (click)="dismiss()" [?disabled]="busy">{{ t('site.cancel') }}</button>
+  </div>
+
+  <input type="file" accept="image/*" class="sr-only" tabindex="-1" (change)="pick($event)" />
+</ui-dialog>

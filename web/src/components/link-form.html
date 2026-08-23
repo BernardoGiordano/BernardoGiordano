@@ -1,0 +1,46 @@
+<form class="edit-panel" (submit)="submit($event)">
+  <div class="edit-grid">
+    <ui-field
+      name="label"
+      required
+      label="{{ t('editor.linkLabel') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.label"
+    >
+      <input class="edit-input" />
+    </ui-field>
+
+    <ui-field
+      name="url"
+      required
+      label="{{ t('editor.linkUrl') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      [.field]="form.fields.url"
+    >
+      <input class="edit-input" type="url" />
+    </ui-field>
+
+    <ui-field
+      name="kind"
+      label="{{ t('editor.linkKind') }}"
+      hint="{{ t('editor.linkKindHint') }}"
+      label-class="edit-label"
+      error-class="edit-error"
+      hint-class="edit-hint"
+      [.field]="form.fields.kind"
+    >
+      <input class="edit-input" />
+    </ui-field>
+  </div>
+
+  <p *if="errorMessage" class="edit-error" role="alert">{{ errorMessage }}</p>
+
+  <div class="edit-actions">
+    <button type="submit" class="btn btn-primary" [?disabled]="busy">
+      {{ busy ? t('editor.saving') : t('site.save') }}
+    </button>
+    <button type="button" class="btn btn-quiet" (click)="cancel()" [?disabled]="busy">{{ t('site.cancel') }}</button>
+  </div>
+</form>
