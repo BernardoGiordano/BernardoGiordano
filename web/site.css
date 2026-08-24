@@ -52,6 +52,12 @@
      a semantic light, not a second brand colour — and it is a 7px circle. */
   --site-open: #3f8f5c;
 
+  /* The second of those, and the same argument: a star is gold everywhere it
+     has ever been drawn, and a blurple one beside a repository's count would be
+     a mark nobody recognises. It is a 12px glyph inside a chip, so it is stepped
+     to clear the chip's fill rather than the canvas. */
+  --site-star: #a8761a;
+
   /* Body-size accent text: the accent-to-ground pair is tuned to 3:1, which is
      enough for icons, large type and chrome but not for a paragraph. A deep
      ramp step carries prose in the accent's hue instead. */
@@ -91,6 +97,7 @@
     --site-rule: #3f424d;
     --site-danger: #d98484;
     --site-open: #7fca94;
+    --site-star: #e0b354;
 
     --site-accent-quiet: #d2cefd;
 
@@ -124,6 +131,7 @@
   --site-rule: #3f424d;
   --site-danger: #d98484;
   --site-open: #7fca94;
+  --site-star: #e0b354;
 
   --site-accent-quiet: #d2cefd;
 
@@ -156,6 +164,21 @@
   --site-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --site-radius: 8px;
   --site-radius-sm: 4px;
+
+  /* The two washes as one value, because two things paint them: the layer behind
+     the page, and the bar pinned over it, which has to paint exactly what it
+     covers. Written once so they cannot drift apart. The colours inside are
+     theme tokens, substituted where the value is used rather than here. */
+  --site-wash:
+    radial-gradient(88rem 52rem at 10% -22%, var(--site-wash-a), transparent 60%),
+    radial-gradient(70rem 44rem at 94% 4%, var(--site-wash-b), transparent 58%);
+
+  /* The viewer's ground and the type on it. The one surface on the site that is
+     dark in both themes — a photograph is shown against a veil, not against the
+     page — so its two values do not belong in the theme blocks above. */
+  --site-veil: rgb(9 10 16 / 88%);
+  --site-veil-ink: rgb(233 233 237 / 72%);
+  --site-veil-ink-strong: rgb(245 245 250 / 96%);
 }
 
 body {
@@ -182,9 +205,7 @@ body {
 }
 
 body::before {
-  background:
-    radial-gradient(88rem 52rem at 10% -22%, var(--site-wash-a), transparent 60%),
-    radial-gradient(70rem 44rem at 94% 4%, var(--site-wash-b), transparent 58%);
+  background: var(--site-wash);
   content: '';
   inset: 0;
   pointer-events: none;
@@ -207,6 +228,20 @@ body::before {
 h1.display,
 .display-lead {
   text-wrap: balance;
+}
+
+/* The same heading in the mono face, which is what a project's name is: a
+   repository, not a title. It takes the mono stack's own tracking rather than
+   the display face's -0.015em — a monospaced face has already decided how wide
+   its glyphs are, and tightening it only closes the gaps it was drawn with. The
+   templates set it two steps smaller than `.display` for the same reason: mono
+   at 25px reads as 27px beside Inter. */
+.display-mono {
+  font-family: var(--site-font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-wrap: pretty;
 }
 
 /* Metadata: counts, dates, catalogue numbers, handles. Not a second face —
@@ -272,24 +307,26 @@ h1.display,
   position: absolute;
 }
 
-/* The tab bar, pinned over content that scrolls under it. Solid first so the
-   bar is never transparent where `backdrop-filter` is unsupported. */
-.bar-blur {
-  background-color: var(--ui-color-canvas);
-}
+/* The tab bar, pinned over content that scrolls under it — opaque, and painting
+   exactly what it covers.
 
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-  /* Blur and no colour at all, which is the only thing that leaves no band.
-     A tint is a colour averaged with whatever is behind it, and behind the bar
-     is a wash a few per cent off the canvas beside it — so any tint, at any
-     alpha, paints a rectangle a few values off its surroundings, and a flat
-     page shows a five-value step as an edge. Blurring a flat area returns the
-     same flat area, so at the top of the page the bar is invisible by
-     arithmetic rather than by a colour that nearly matches. */
-  .bar-blur {
-    backdrop-filter: blur(16px);
-    background-color: transparent;
-  }
+   This was a `backdrop-filter` blur, for a real reason: the ground behind the
+   bar is not flat, it is the canvas plus two washes, so a flat fill of the
+   canvas colour paints a rectangle a few values off its surroundings and a flat
+   page shows a five-value step as an edge. Blurring a flat area returns the same
+   flat area, which made the bar invisible by arithmetic.
+
+   It also made everything that scrolled under it smear, which is the part that
+   was not worth it. The fix is to paint the washes on the bar as well and pin
+   them to the window: `background-attachment: fixed` gives a background image
+   the viewport as its positioning area, which is the same box `body::before`
+   occupies, so the same two gradients land in the same two places. The bar is
+   then opaque and still has no edge — by drawing what is behind it rather than
+   by averaging it. */
+.bar-pinned {
+  background-attachment: fixed;
+  background-color: var(--ui-color-canvas);
+  background-image: var(--site-wash);
 }
 
 .no-scrollbar {
@@ -364,18 +401,21 @@ h1.display,
    a label, and a filled neutral chip beside an accent one is the whole
    taxonomy the pages need. */
 .chip {
+  align-items: center;
   background-color: var(--ui-color-surface-raised);
   border: 1px solid transparent;
   border-radius: calc(var(--site-radius) * 0.75);
   color: var(--ui-color-text);
   display: inline-flex;
   font-size: 11px;
+  gap: 5px;
   letter-spacing: 0.02em;
   padding: 3px 9px;
   transition:
     color 140ms ease,
     border-color 140ms ease,
-    background-color 140ms ease;
+    background-color 140ms ease,
+    transform 140ms ease;
   white-space: nowrap;
 }
 
@@ -397,6 +437,73 @@ h1.display,
   .chip-on:hover {
     background-color: color-mix(in srgb, var(--ui-color-accent) 12%, transparent);
     color: var(--ui-color-accent);
+  }
+}
+
+/* A chip carrying a fact rather than a word: the mono face, and Inter's tabular
+   figures replaced by a face where every glyph is one advance. Four counts down
+   a page of rows then line up as a column, which is the whole reason a catalogue
+   sets its numbers in mono — and the tracking goes to zero, because 0.02em is
+   what a label needs to read as a label and a monospaced figure is not one. */
+.chip-mono {
+  font-family: var(--site-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* The mark inside a chip. 12px on a 24px grid, and its own colour: a count with
+   a glyph in front of it needs no word after it, which is what let six labelled
+   numbers become six chips. */
+.chip-mark {
+  flex-shrink: 0;
+  height: 12px;
+  width: 12px;
+}
+
+.mark-stars {
+  color: var(--site-star);
+}
+
+.mark-downloads {
+  color: var(--site-open);
+}
+
+.mark-forks {
+  color: var(--ui-color-accent);
+}
+
+.mark-quiet {
+  color: var(--ui-color-text-muted);
+}
+
+/* The one chip that does something. It carries a repository's star count and it
+   is the invitation to add one, which used to be a filled button at the top of
+   the row — the loudest element on the page, for the rarest action on it, with
+   the count set at 55% inside it. Growing under the pointer is how a chip says
+   it is a control without being drawn as one all the time. */
+.chip-cta {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .chip-cta:hover {
+    background-color: var(--ui-color-hover);
+    border-color: var(--ui-color-accent);
+    transform: scale(1.09);
+  }
+}
+
+/* Nothing grows for anyone who asked the system for less of that. */
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition:
+      color 140ms ease,
+      border-color 140ms ease,
+      background-color 140ms ease;
+  }
+
+  .chip-cta:hover {
+    transform: none;
   }
 }
 
@@ -447,9 +554,18 @@ h1.display,
   overflow: hidden;
 }
 
+/* The player's frame is the width cap and nothing else. No hairline and no
+   radius: the ring and the 8px belong to the cover above, which is an image the
+   page owns, and round the player they were a frame drawn over somebody else's
+   frame — Bandcamp paints its own rectangle inside, corners included, so the
+   radius clipped a player that had already decided it was square. */
+.player-frame {
+  max-width: 700px;
+}
+
 .player-bar {
   border: 0;
-  border-radius: var(--site-radius);
+  border-radius: 0;
   display: block;
   overflow: hidden;
   width: 100%;
@@ -623,6 +739,10 @@ md-body {
 .prose-site .md-frame > img {
   border: 0;
   border-radius: 0;
+  /* The box is 420px of a 64ch column and the file behind it is three times
+     that wide, so the picture in the page is a thumbnail and clicking it opens
+     the photograph. The pointer says so before the click. */
+  cursor: zoom-in;
   height: auto;
   max-height: 100%;
   max-width: 100%;
@@ -646,6 +766,7 @@ md-body {
 /* An image inside a sentence, which no box belongs around. */
 .prose-site img {
   border-radius: var(--site-radius);
+  cursor: zoom-in;
   display: block;
   height: auto;
   margin-inline: auto;
@@ -703,12 +824,177 @@ md-body {
   font-weight: 500;
 }
 
+/* ── Footnotes ───────────────────────────────────────────────────────────
+   `[^1]` in a sentence and `[^1]: the note` at the foot of the file, which is
+   what the imported posts were written in. The marker is a superscript link and
+   the notes are an ordered list under a rule: small, quiet, and the same measure
+   as the words, because an endnote is a smaller version of the paragraph it
+   belongs to rather than a different kind of thing.
+
+   `scroll-margin-top` is the pinned tab bar. Without it the anchor scrolls the
+   note to the top of the window, which is behind the bar. */
+
+.prose-site .md-fn-ref {
+  font-size: 0.7em;
+  font-variant-numeric: tabular-nums;
+  /* A superscript with a line height of its own stretches the line it sits in. */
+  line-height: 0;
+  scroll-margin-top: 86px;
+}
+
+.prose-site .md-fn-ref a {
+  padding-inline: 0.15em;
+  text-decoration: none;
+}
+
+.prose-site .md-fn-ref a:hover {
+  text-decoration: underline;
+}
+
+/* The one place on the site a link says "you are here": arriving at a note from
+   the text, and arriving back at the sentence from the note, both need to point
+   at which of eight rows was meant. */
+.prose-site .md-fn-ref:target a,
+.prose-site .md-footnotes li:target {
+  color: var(--ui-color-accent);
+}
+
+.prose-site .md-footnotes {
+  color: var(--ui-color-text-muted);
+  font-size: 0.85em;
+  line-height: 1.65;
+  margin-top: 2.8em;
+}
+
+.prose-site .md-footnotes hr {
+  margin-block: 0 1.5em;
+}
+
+.prose-site .md-footnotes ol {
+  padding-inline-start: 1.5em;
+}
+
+.prose-site .md-footnotes li {
+  scroll-margin-top: 86px;
+}
+
+.prose-site .md-footnotes li + li {
+  margin-top: 0.6em;
+}
+
+.prose-site .md-fn-back {
+  text-decoration: none;
+}
+
 .prose-site figcaption {
   color: var(--ui-color-text-muted);
   font-size: 0.72em;
   letter-spacing: 0.01em;
   margin-top: 0.55em;
   text-align: start;
+}
+
+/* ── The image viewer ────────────────────────────────────────────────────
+   A post's photograph at the size of the window, on a veil rather than on a
+   replacement page. A native `<dialog>`, so Escape closes it, the focus stays
+   inside it and the page behind it is inert without a line of JavaScript for any
+   of the three — and so the darkening is `::backdrop`, which is the browser's
+   own layer between the two and needs no element of its own.
+
+   The dialog fills the window and is transparent: what the pointer lands on
+   almost everywhere in here is the veil, and the veil closes it. Only the
+   photograph does not. */
+
+.img-viewer {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  cursor: zoom-out;
+  display: flex;
+  height: 100%;
+  inset: 0;
+  justify-content: center;
+  margin: 0;
+  max-height: none;
+  max-width: none;
+  padding: 28px;
+  width: 100%;
+}
+
+.img-viewer:not([open]) {
+  display: none;
+}
+
+.img-viewer::backdrop {
+  background-color: var(--site-veil);
+}
+
+/* The page under a modal dialog still scrolls behind it, which reads as the
+   photograph sliding over a moving background. */
+html:has(.img-viewer[open]) {
+  overflow: hidden;
+}
+
+.img-viewer-figure {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.img-viewer-img {
+  border-radius: var(--site-radius);
+  cursor: default;
+  display: block;
+  max-height: 100%;
+  max-width: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.img-viewer-caption {
+  color: var(--site-veil-ink);
+  flex-shrink: 0;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  max-width: 64ch;
+  text-align: center;
+}
+
+/* On the veil rather than on the page, so it takes the veil's ink and not the
+   theme's — `.btn-icon` here would be a light grey button on a dark ground under
+   the light theme. */
+.img-viewer-close {
+  align-items: center;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--site-veil-ink) 40%, transparent);
+  border-radius: var(--site-radius);
+  color: var(--site-veil-ink);
+  cursor: pointer;
+  display: inline-flex;
+  inset-block-start: 16px;
+  inset-inline-end: 16px;
+  justify-content: center;
+  padding: 7px;
+  position: fixed;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.img-viewer-close svg {
+  height: 15px;
+  width: 15px;
+}
+
+.img-viewer-close:hover {
+  background-color: color-mix(in srgb, var(--site-veil-ink) 14%, transparent);
+  border-color: var(--site-veil-ink);
+  color: var(--site-veil-ink-strong);
 }
 
 /* ── Editing ──────────────────────────────────────────────────────────────

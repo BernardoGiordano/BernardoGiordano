@@ -15,6 +15,11 @@
  * it.
  */
 
+import { t } from '@core/localization/i18n.js';
+
+import { collectedFootnotes, footnotes } from './md-footnotes.js';
+import { openImageViewer } from './image-viewer.js';
+
 /** @type {Promise<{ render: (markdown: string) => string }> | null} */
 let renderer = null;
 
@@ -42,9 +47,29 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'title', 'src', 'alt', 'width', 'height', 'loading', 'decoding', 'colspan', 'rowspan', 'align', 'lang', 'dir', 'class'];
 
+/**
+ * The endnotes, as the markup a post cannot write for itself: a rule and an
+ * ordered list at the foot of the piece. Every note is inline content —
+ * `parseInline` rather than `parse`, so a one-sentence note is a list item and
+ * not a list item with a paragraph inside it.
+ *
+ * The ids and the two anchors that make a footnote a footnote are added after
+ * DOMPurify has run, in `#decorateFootnotes`.
+ *
+ * @param {(markdown: string) => string} parseInline
+ * @returns {string}
+ */
+function endnotes(parseInline) {
+  const notes = collectedFootnotes();
+  if (notes.length === 0) return '';
+  const items = notes.map((note) => `<li>${parseInline(note.markdown)}</li>`).join('');
+  return `<div class="md-footnotes"><hr /><ol>${items}</ol></div>`;
+}
+
 function loadRenderer() {
   renderer ??= Promise.all([import('marked'), import('dompurify')]).then(([{ marked }, { default: purify }]) => {
     marked.setOptions({ gfm: true, breaks: false });
+    marked.use(footnotes);
 
     purify.addHook('afterSanitizeAttributes', (node) => {
       if (!(node instanceof Element)) return;
@@ -59,13 +84,18 @@ function loadRenderer() {
     });
 
     return {
-      render: (markdown) =>
-        purify.sanitize(/** @type {string} */ (marked.parse(markdown)), {
+      render: (markdown) => {
+        // The body first, then the notes it turned out to refer to: the order is
+        // the requirement, not a preference. `collectedFootnotes` reads state
+        // this parse filled in, and the next call into `marked` clears it.
+        const body = /** @type {string} */ (marked.parse(markdown));
+        return purify.sanitize(body + endnotes((note) => marked.parseInline(note)), {
           ALLOWED_TAGS,
           ALLOWED_ATTR,
           ALLOW_DATA_ATTR: false,
           ADD_URI_SAFE_ATTR: [],
-        }),
+        });
+      },
     };
   });
   return renderer;
@@ -78,6 +108,13 @@ export class MdBody extends HTMLElement {
 
   /** Bump per assignment so a slow render cannot overwrite a newer one. */
   #generation = 0;
+
+  constructor() {
+    super();
+    // One delegated listener rather than one per image: every render replaces
+    // the children, and a listener per image is a listener per render to attach.
+    this.addEventListener('click', (event) => this.#onClick(event));
+  }
 
   get markdown() {
     return this.#markdown;
@@ -113,6 +150,70 @@ export class MdBody extends HTMLElement {
 
     this.innerHTML = render(this.#markdown);
     this.#decorateImages();
+    this.#decorateFootnotes();
+  }
+
+  /**
+   * A photograph in a post is a thumbnail of what was uploaded — 420px of a
+   * 64ch column — so clicking one opens it at the size of the window. The
+   * pointer says so first: `.md-img` is `zoom-in`.
+   *
+   * @param {Event} event
+   */
+  #onClick(event) {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement) || !image.classList.contains('md-img')) return;
+    openImageViewer({
+      source: image.currentSrc === '' ? image.src : image.currentSrc,
+      alt: image.alt,
+      caption: image.closest('figure')?.querySelector('figcaption')?.textContent ?? '',
+    });
+  }
+
+  /**
+   * What makes a superscript a footnote: an id to come back to, a link to the
+   * note, an id on the note and a link back. All four are attributes, and they
+   * are set here rather than written into the markup `md-footnotes` emits,
+   * because an `id` a post could write for itself is a DOM-clobbering surface
+   * and DOMPurify's allow-list is the thing keeping it out.
+   *
+   * The number is read off the marker rather than counted here: a note referred
+   * to twice carries the same number in both places, so the second marker is not
+   * the second note.
+   */
+  #decorateFootnotes() {
+    const seen = new Set();
+
+    for (const marker of this.querySelectorAll('sup.md-fn-ref')) {
+      const number = marker.textContent ?? '';
+      const link = document.createElement('a');
+      link.setAttribute('href', `#md-fn-${number}`);
+      link.setAttribute('role', 'doc-noteref');
+      link.textContent = number;
+      marker.replaceChildren(link);
+      // Only the first reference can own the id the note links back to.
+      if (seen.has(number)) continue;
+      seen.add(number);
+      marker.id = `md-fnref-${number}`;
+    }
+
+    const list = this.querySelector('.md-footnotes > ol');
+    if (list === null) return;
+    this.querySelector('.md-footnotes')?.setAttribute('role', 'doc-endnotes');
+
+    [...list.children].forEach((note, index) => {
+      const number = String(index + 1);
+      note.id = `md-fn-${number}`;
+
+      const back = document.createElement('a');
+      back.className = 'md-fn-back';
+      back.setAttribute('href', `#md-fnref-${number}`);
+      back.setAttribute('role', 'doc-backlink');
+      back.setAttribute('aria-label', t('blog.footnoteBack', { number }));
+      back.textContent = '\u21a9';
+      // A non-breaking space, so the arrow never begins a line of its own.
+      note.append(document.createTextNode('\u00a0'), back);
+    });
   }
 
   /**

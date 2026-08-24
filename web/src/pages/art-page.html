@@ -102,9 +102,14 @@
                scrolls the rest, so only a height computed from the track count
                ends on a row's rule instead of on a band of white. Five rows is
                the cap — past that the list scrolls, and the record after this
-               one stays on the screen. -->
+               one stays on the screen.
+
+               No ring and no radius round it, unlike the cover above: the
+               player is a rectangle Bandcamp paints, and a rounded box with a
+               hairline was a frame drawn round somebody else's frame. The cover
+               is an image the page owns and can crop; this is not. -->
           <div *if="hasEmbed(work)" class="mt-6">
-            <div class="release-frame">
+            <div class="player-frame">
               <iframe
                 [src]="embedUrl(work)"
                 [title]="work.title"

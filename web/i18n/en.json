@@ -24,7 +24,8 @@
     "moveDown": "Move down",
     "loading": "Loading",
     "failed": "Could not load this. Try again.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "close": "Close"
   },
   "nav": {
     "projects": "Projects",
@@ -50,15 +51,14 @@
       "one": "{count} download",
       "other": "{count} downloads"
     },
-    "starIt": "Star on GitHub",
-    "star": "Star",
     "totalStars": "stars",
     "totalDownloads": "downloads",
     "more": "More repositories on GitHub",
-    "starsCount": "{count} stars",
+    "starCta": "{count} stars. Star it on GitHub",
     "downloadsCount": "{count} downloads",
     "forksCount": "{count} forks",
     "lastRelease": "last release {when}",
+    "lastReleaseTagged": "{tag}, released {when}",
     "since": "since {year}",
     "visit": "Open",
     "refreshStats": "Refresh GitHub stats",
@@ -113,7 +113,9 @@
     "draft": "Draft",
     "newPost": "New post",
     "notFound": "That post does not exist.",
-    "count": "{shown} of {total}"
+    "count": "{shown} of {total}",
+    "imageViewer": "Image, full screen",
+    "footnoteBack": "Back to reference {number}"
   },
   "login": {
     "title": "Sign in",

@@ -38,19 +38,21 @@ const PLAYER_SKIN = {
  * The old 460px was right for none of them — an eight-track record left a band
  * of Bandcamp's own white under the last row.
  *
- * `header` is the title, the credit line and the transport, which is the whole
- * player when there is no track list. `chrome` is that same band plus the
- * list's rules and its scroll gutter, and `row` is one track. 132 + 33n lands
- * within a pixel of the row's rule.
+ * `chrome` is the title, the credit line, the transport, the list's rules and
+ * its scroll gutter; `row` is one track. 132 + 33n lands within a pixel of the
+ * row's rule.
  *
- * `rows` is the cap. A record is a block on a page of blocks, and a long one
- * taking six hundred pixels of it pushes the next record off the screen; five
- * rows is a player rather than a document. Past that the list scrolls, which is
- * Bandcamp's own behaviour and the reason a height under the content is safe:
- * the frame is short on purpose, so the scrollbar reads as a list that
- * continues rather than as a box that was measured wrong.
+ * `rows` is both the cap and the default. A record is a block on a page of
+ * blocks, and a long one taking six hundred pixels of it pushes the next record
+ * off the screen; five rows is a player rather than a document. Past that the
+ * list scrolls, which is Bandcamp's own behaviour and the reason a height under
+ * the content is safe: the frame is short on purpose, so the scrollbar reads as
+ * a list that continues rather than as a box that was measured wrong. A record
+ * whose tracks this site does not hold gets those five rows too — Bandcamp knows
+ * the track list either way, and the alternative was the transport on its own,
+ * which is what a record with no `tracks` rows used to show.
  */
-const PLAYER_SIZE = { header: 122, chrome: 132, row: 33, rows: 5 };
+const PLAYER_SIZE = { chrome: 132, row: 33, rows: 5 };
 
 /** No row has this id, so it is the one that means "the row being added". */
 const NEW_ROW = 0;
@@ -87,10 +89,12 @@ export class ArtPage extends SignalElement {
    * `artwork=none` drops Bandcamp's own cover — the one above it is ours, and a
    * second one a few sizes smaller was never doing anything the first didn't.
    *
-   * `tracklist=true` is asked for only when the record names its tracks, since
-   * that count is the only thing that can size the frame to the list (see
-   * `embedHeight`). Without it Bandcamp draws a list stretched to a height
-   * nobody measured, which is the empty white box this replaces.
+   * `tracklist=true` always. It used to be asked for only when this site's own
+   * record named its tracks, which is a field almost none of them fills in, so
+   * the player on the page was the transport and nothing else — the list is the
+   * reason the large player is here at all, and Bandcamp knows the tracks
+   * whether or not the row beside it does. `embedHeight` sizes the frame to
+   * five rows in that case.
    *
    * `transparent=true` lets the page's own ground show through the player rather
    * than have it paint a rectangle a few values off the surface it sits on;
@@ -106,23 +110,11 @@ export class ArtPage extends SignalElement {
   embedUrl(work) {
     if (!/^\d+$/u.test(work.bandcampAlbumId)) return '';
     const skin = resolvedTheme.value === 'dark' ? PLAYER_SKIN.dark : PLAYER_SKIN.light;
-    const tracklist = this.hasTracklist(work) ? 'tracklist=true/' : '';
     const url = new URL(
-      `/EmbeddedPlayer/album=${work.bandcampAlbumId}/size=large/bgcol=${skin.background}/linkcol=${skin.link}/${tracklist}artwork=none/transparent=true/`,
+      `/EmbeddedPlayer/album=${work.bandcampAlbumId}/size=large/bgcol=${skin.background}/linkcol=${skin.link}/tracklist=true/artwork=none/transparent=true/`,
       BANDCAMP_ORIGIN,
     );
     return bypassSecurityTrustResourceUrl(url.href);
-  }
-
-  /**
-   * Whether the player is asked for its track list. Only a record that names
-   * its tracks can be given a frame the right height for one, and a list in a
-   * frame of the wrong height is a white band under the last row.
-   *
-   * @param {ArtWork} work
-   */
-  hasTracklist(work) {
-    return work.tracks.length > 0;
   }
 
   /**
@@ -139,8 +131,8 @@ export class ArtPage extends SignalElement {
    * @param {ArtWork} work
    */
   embedHeight(work) {
-    const tracks = Math.min(work.tracks.length, PLAYER_SIZE.rows);
-    if (tracks === 0) return PLAYER_SIZE.header;
+    const known = work.tracks.length;
+    const tracks = known === 0 ? PLAYER_SIZE.rows : Math.min(known, PLAYER_SIZE.rows);
     return PLAYER_SIZE.chrome + PLAYER_SIZE.row * tracks;
   }
 

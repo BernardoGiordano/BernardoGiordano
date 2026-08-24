@@ -37,7 +37,11 @@
       <div *else class="{{ canEdit ? 'edit-target' : '' }}">
         <div class="min-w-0">
           <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-            <h2 class="display text-[22px] text-ink sm:text-[25px]">
+            <!-- Mono, because the name of a project is the name of a
+                 repository: the chips under it are already set in that face,
+                 and the one thing on the row that is a proper noun of the
+                 command line should not be the one thing set as prose. -->
+            <h2 class="display-mono text-[19px] text-ink sm:text-[22px]">
               <!-- `.card-target` is what makes the whole row clickable: the
                    anchor grows a transparent layer over it, so the pointer is
                    a pointer everywhere and the click lands here. -->
@@ -63,60 +67,37 @@
               {{ statusLabel(project) }}
             </span>
 
-            <!-- One right-aligned group, not two. Both the star button and the
-                 edit tools used to carry `ms-auto`, and the second one after the
-                 first does nothing — which is why the star pill sat against the
-                 title instead of at the end of the row as soon as edit mode was
-                 on. -->
-            <!-- The count is gone from the button and is a fact in the line
-                 below, with the forks and the downloads it belongs beside. It
-                 was doing two jobs badly here: at 55% under a full-strength
-                 label it was the least legible part of the loudest element on
-                 the row, it made every pill a different width so eight of them
-                 ran a ragged edge down the page, and a repository with none
-                 read "Star 0". What is left is one invitation, the same width
-                 on every row. -->
-            <div class="ms-auto flex shrink-0 items-center gap-2">
-              <a
-                *if="repoUrl(project)"
-                [href]="repoUrl(project)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-primary shrink-0 px-2.5 py-[3px] text-[12px]"
-                [title]="t('projects.starIt')"
-                [aria-label]="t('projects.starIt')"
+            <!-- One right-aligned group, and in edit mode the only one. The
+                 star button is gone from here: what it invited is now the chip
+                 that carries the count, in the line below with the other facts
+                 GitHub reported. A filled button at the end of every row was
+                 the loudest element on the page for an action almost nobody
+                 takes, and the count beside it was the least legible part of
+                 it. -->
+            <div *if="canEdit" class="edit-tools ms-auto">
+              <button
+                *if="project.repo"
+                type="button"
+                class="btn-icon"
+                (click)="refresh(project)"
+                [?disabled]="isBusy(project)"
+                [aria-label]="t('projects.refreshStats')"
+                [title]="t('projects.refreshStats')"
               >
                 <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path [d]="icon('star')"></path>
+                  <path [d]="icon('refreshCw')"></path>
                 </svg>
-                {{ t('projects.star') }}
-              </a>
+              </button>
 
-              <div *if="canEdit" class="edit-tools">
-                <button
-                  *if="project.repo"
-                  type="button"
-                  class="btn-icon"
-                  (click)="refresh(project)"
-                  [?disabled]="isBusy(project)"
-                  [aria-label]="t('projects.refreshStats')"
-                  [title]="t('projects.refreshStats')"
-                >
-                  <svg viewBox="0 0 24 24" class="size-[13px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path [d]="icon('refreshCw')"></path>
-                  </svg>
-                </button>
-
-                <row-tools
-                  [.can-up]="canMoveUp(project)"
-                  [.can-down]="canMoveDown(project)"
-                  [.busy]="isBusy(project)"
-                  (edit)="open(project)"
-                  (move-up)="move(project, -1)"
-                  (move-down)="move(project, 1)"
-                  (remove)="discard(project)"
-                ></row-tools>
-              </div>
+              <row-tools
+                [.can-up]="canMoveUp(project)"
+                [.can-down]="canMoveDown(project)"
+                [.busy]="isBusy(project)"
+                (edit)="open(project)"
+                (move-up)="move(project, -1)"
+                (move-down)="move(project, 1)"
+                (remove)="discard(project)"
+              ></row-tools>
             </div>
           </div>
 
@@ -124,11 +105,49 @@
             {{ project.description }}
           </p>
 
-          <!-- One line, not a row of chips over a row of icons: what it runs on,
-               a dash, and what it has done. Everything in it is a fact GitHub
-               reported or a platform the record names, so it reads as a
-               catalogue entry rather than as a badge collection. -->
-          <p class="meta mt-3 text-ink/55">{{ facts(project) }}</p>
+          <!-- Chips, not a sentence. The line this replaces was platforms, an
+               em dash and what GitHub reported, held together by middots — one
+               string built in JavaScript because the separators depended on
+               which parts existed. A chip needs no separator, so the facts are
+               facts again: the plain ones as they were authored, the counted
+               ones in the mono face with tabular figures and one small coloured
+               mark each, which is the whole difference between a number worth
+               reading and a label worth reading.
+
+               The star chip is the exception twice over: its mark is filled
+               rather than stroked, because a hollow star means "not starred",
+               and it is a link. The invitation used to be a button at the top
+               of the row; it is now the count itself, and it grows under the
+               pointer to say so. -->
+          <div class="mt-3 flex flex-wrap items-center gap-1.5">
+            <span *for="tag of tags(project); key: tag" class="chip chip-mono">{{ tag }}</span>
+
+            <a
+              *if="starCount(project)"
+              [href]="repoUrl(project)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="chip chip-mono chip-cta"
+              [title]="starLabel(project)"
+              [aria-label]="starLabel(project)"
+            >
+              <svg viewBox="0 0 24 24" class="chip-mark mark-stars" fill="currentColor" aria-hidden="true">
+                <path [d]="icon('star')"></path>
+              </svg>
+              {{ starCount(project) }}
+            </a>
+
+            <span
+              *for="metric of metrics(project); key: metric.key"
+              class="chip chip-mono"
+              [title]="metric.label"
+            >
+              <svg viewBox="0 0 24 24" class="chip-mark {{ metric.mark }}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path [d]="icon(metric.icon)"></path>
+              </svg>
+              {{ metric.text }}
+            </span>
+          </div>
         </div>
       </div>
     </li>

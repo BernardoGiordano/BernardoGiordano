@@ -55,38 +55,130 @@ export class ProjectsPage extends SignalElement {
   }
 
   /**
-   * The row's one muted line: what it runs on, an em dash, and what it has done.
-   * Built here rather than as eight conditional spans in the template because
-   * the separators depend on which parts exist — a middot with nothing after it
-   * is the thing that makes a generated line look generated.
+   * The plain chips: what it runs on, what kind of thing it is, and what the
+   * licence is. Facts with no number in them, so they carry no icon — a glyph
+   * beside "Nintendo 3DS" would be decoration, and the row already has five
+   * other chips competing for the eye.
+   *
+   * One array rather than three loops in the template because the separators
+   * are gone: what used to be a generated line with middots in it — and a
+   * middot with nothing after it is what makes a generated line look
+   * generated — is now one chip per fact, and a chip that has nothing to say
+   * is simply absent.
    *
    * @param {Project} project
    */
-  facts(project) {
-    const left = [...project.platforms];
-    if (project.kind !== '') left.push(this.#capitalise(project.kind));
+  tags(project) {
+    const tags = [...project.platforms];
+    if (project.kind !== '') tags.push(this.#capitalise(project.kind));
+    tags.push(this.#licence(project));
+    return tags;
+  }
 
-    const right = [t(project.openSource ? 'projects.openSource' : 'projects.closedSource')];
-    // Stars lead the numbers. They used to sit inside the star button, where a
-    // count is not what a button is for: the invitation is the same on every
-    // row and the number is not, so the number is a fact and belongs with the
-    // other facts GitHub reported. Zero is left out for the reason a fork count
-    // of zero is — a stat nobody has yet is not a stat.
-    if (project.stats?.stars) right.push(t('projects.starsCount', { count: compactNumber(project.stats.stars) }));
+  /**
+   * The licence GitHub reports, in place of the words "Open source". Both say
+   * the source is open; only one says what may be done with it, which is the
+   * question anybody reading that chip actually has — and an SPDX id is four
+   * characters where the phrase was eleven.
+   *
+   * The phrase survives as the fallback, for a repository whose licence the
+   * poller could not read and for the projects that have no repository at all.
+   * A row that simply dropped the chip would read as closed source.
+   *
+   * @param {Project} project
+   */
+  #licence(project) {
+    if (!project.openSource) return t('projects.closedSource');
+    const licence = project.stats?.license ?? '';
+    return licence === '' ? t('projects.openSource') : licence;
+  }
+
+  /**
+   * The star count, on its own, for the chip that is also the invitation to add
+   * one. Zero is left out for the reason a fork count of zero is: a stat nobody
+   * has yet is not a stat, and "0" beside a gold star reads as a verdict.
+   *
+   * @param {Project} project
+   */
+  starCount(project) {
+    const stars = project.stats?.stars ?? 0;
+    if (stars === 0 || this.repoUrl(project) === '') return '';
+    return compactNumber(stars);
+  }
+
+  /**
+   * What the star chip is called, since what it shows is a number and what it
+   * does is not obvious from one: the count first, because that is what the
+   * pointer is over, then the action.
+   *
+   * @param {Project} project
+   */
+  starLabel(project) {
+    return t('projects.starCta', { count: compactNumber(project.stats?.stars ?? 0) });
+  }
+
+  /**
+   * The chips that carry a number: the figure in the mono face with tabular
+   * figures, and a small coloured mark to say which figure it is. The word the
+   * number used to be followed by moves to the chip's title — at 11px, six
+   * labelled counts in a row are a paragraph, and the icon says the same thing
+   * in one glyph.
+   *
+   * @param {Project} project
+   */
+  metrics(project) {
+    /** @type {{ key: string, text: string, icon: string, mark: string, label: string }[]} */
+    const metrics = [];
+
     const downloads = this.downloads(project);
     if (downloads !== null && downloads > 0) {
-      right.push(t('projects.downloadsCount', { count: compactNumber(downloads) }));
-    }
-    if (project.stats?.forks) right.push(t('projects.forksCount', { count: compactNumber(project.stats.forks) }));
-    if (project.stats?.lastReleaseAt) {
-      right.push(t('projects.lastRelease', { when: relativeTime(project.stats.lastReleaseAt) }));
-    }
-    if (project.stats?.firstCommitAt) {
-      right.push(t('projects.since', { year: project.stats.firstCommitAt.slice(0, 4) }));
+      metrics.push({
+        key: 'downloads',
+        text: compactNumber(downloads),
+        icon: 'download',
+        mark: 'mark-downloads',
+        label: t('projects.downloadsCount', { count: compactNumber(downloads) }),
+      });
     }
 
-    const parts = [left.join(' \u00b7 '), right.join(' \u00b7 ')].filter((part) => part !== '');
-    return parts.join(' \u2014 ');
+    if (project.stats?.forks) {
+      metrics.push({
+        key: 'forks',
+        text: compactNumber(project.stats.forks),
+        icon: 'gitFork',
+        mark: 'mark-forks',
+        label: t('projects.forksCount', { count: compactNumber(project.stats.forks) }),
+      });
+    }
+
+    if (project.stats?.lastReleaseAt) {
+      // The tag and when it went out are one fact — "v5.1.0, twelve days ago" —
+      // and a version with no date is trivia while a date with no version does
+      // not say what shipped. A repository that tags nothing keeps the date on
+      // its own.
+      const when = relativeTime(project.stats.lastReleaseAt);
+      const tag = project.stats.lastReleaseTag ?? '';
+      metrics.push({
+        key: 'release',
+        text: tag === '' ? when : `${tag} ${when}`,
+        icon: 'clock',
+        mark: 'mark-quiet',
+        label: tag === '' ? t('projects.lastRelease', { when }) : t('projects.lastReleaseTagged', { tag, when }),
+      });
+    }
+
+    if (project.stats?.firstCommitAt) {
+      const year = project.stats.firstCommitAt.slice(0, 4);
+      metrics.push({
+        key: 'since',
+        text: year,
+        icon: 'calendar',
+        mark: 'mark-quiet',
+        label: t('projects.since', { year }),
+      });
+    }
+
+    return metrics;
   }
 
   /** The accent is for what is alive; everything else is muted. */
