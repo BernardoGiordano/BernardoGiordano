@@ -1,4 +1,5 @@
 import os
+import secrets
 from pathlib import Path
 
 DB = {
@@ -45,6 +46,18 @@ GITHUB_OWNERS = tuple(
     for owner in os.environ.get("GITHUB_OWNERS", "BernardoGiordano,FlagBrew").split(",")
     if owner.strip()
 )
+
+# How long one reader counts as the same reader. A refresh, the back button and
+# the second tab they opened are one visit; coming back tomorrow is another.
+VISIT_WINDOW_HOURS = int(os.environ.get("VISIT_WINDOW_HOURS", "6"))
+
+# Salts the digest that stands in for a visitor in visit_marks. No address is
+# stored anywhere -- the digest is the whole record -- and a salt nobody else
+# knows is what stops that digest from being a lookup table anyone with a dump
+# could walk back to an address. Unset means one made up at startup: deduplication
+# then restarts with the process, which costs a handful of double counts per
+# deploy and nothing else.
+VISIT_SALT = os.environ.get("VISIT_SALT") or secrets.token_hex(32)
 
 UPLOAD_MAX_BYTES = int(os.environ.get("UPLOAD_MAX_BYTES", str(20 * 1024 * 1024)))
 IMAGE_WIDTHS = (480, 960, 1600)

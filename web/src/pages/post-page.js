@@ -7,6 +7,7 @@ import { t } from '@core/localization/i18n.js';
 
 import { BLOG } from '../services/blog-service.js';
 import { EDIT_MODE } from '../services/edit-mode.js';
+import { VISITS } from '../services/visits-service.js';
 import { PostEditor } from '../components/post-editor.js';
 import { RowTools } from '../components/row-tools.js';
 import { fullDate } from '../format.js';
@@ -58,6 +59,11 @@ export class PostPage extends SignalElement {
       .post(slug)
       .then((post) => {
         this.post.value = post;
+        // After the fetch rather than beside it: a slug that 404s is a typed
+        // URL, and counting it would put a row in the table for a post that
+        // does not exist. A draft is not counted either — the backend refuses
+        // one, because the only reader who can open it is its author.
+        inject(VISITS).record('post', post.slug);
       })
       .catch(() => {
         this.missing.value = true;

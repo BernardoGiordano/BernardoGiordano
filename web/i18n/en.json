@@ -108,6 +108,10 @@
       "one": "1 minute to read",
       "other": "{count} minutes to read"
     },
+    "views": {
+      "one": "1 view",
+      "other": "{count} views"
+    },
     "more": "Load more",
     "back": "All posts",
     "draft": "Draft",

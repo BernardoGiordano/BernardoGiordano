@@ -63,9 +63,15 @@ def list_posts(
 
         clause = " AND ".join(where)
         total = db.one(connection, f"SELECT COUNT(*) AS n FROM posts p WHERE {clause}", tuple(params))
+        # The view counter is a table of its own, keyed by slug rather than by
+        # id: it is written by an endpoint that is given a URL and never an
+        # internal number, and a post that is deleted and rewritten under the
+        # same address keeps the count that address earned.
         rows = db.rows(
             connection,
-            f"""SELECT p.* FROM posts p WHERE {clause}
+            f"""SELECT p.*, COALESCE(v.views, 0) AS views FROM posts p
+                LEFT JOIN visits v ON v.scope = 'post' AND v.ref = p.slug
+                WHERE {clause}
                 ORDER BY p.published_on DESC, p.id DESC LIMIT %s OFFSET %s""",
             (*params, limit, offset),
         )
@@ -88,7 +94,13 @@ def list_posts(
 @router.get("/{slug}")
 def read_post(slug: str, request: Request):
     with db.connect() as connection:
-        row = db.one(connection, "SELECT * FROM posts WHERE slug = %s", (slug,))
+        row = db.one(
+            connection,
+            """SELECT p.*, COALESCE(v.views, 0) AS views FROM posts p
+               LEFT JOIN visits v ON v.scope = 'post' AND v.ref = p.slug
+               WHERE p.slug = %s""",
+            (slug,),
+        )
         if row is None or (row["draft"] and not _signed_in(connection, request)):
             raise HTTPException(status_code=404, detail="no_such_post")
         tags = _tags_for(connection, [row["id"]]).get(row["id"], [])

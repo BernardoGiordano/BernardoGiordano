@@ -4,7 +4,8 @@ in the life of the site and a CLI framework would be more code than the commands
   init-db                      apply schema.sql
   set-password <user> <name>   create or repoint the single account (prompts)
   refresh-stats [--force]      poll GitHub now
-  purge-sessions               drop expired sessions and old login attempts
+  purge-sessions               drop expired sessions, old login attempts and
+                               spent visit marks
 """
 
 import getpass
@@ -14,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import auth, db, github  # noqa: E402
+from app.routers import visits  # noqa: E402
 
 
 # Columns added to a table that already exists somewhere. `CREATE TABLE IF NOT
@@ -79,6 +81,7 @@ def refresh_stats(force: bool):
 def purge_sessions():
     with db.connect() as connection:
         print(f"{auth.purge_expired(connection)} sessions dropped")
+        print(f"{visits.purge(connection)} visit marks dropped")
 
 
 if __name__ == "__main__":

@@ -33,8 +33,8 @@
             {{ post.summary }}
           </p>
 
-          <p *if="post.readingMinutes" class="mt-1.5 text-[11.5px] text-ink/50">
-            {{ t('blog.readingTime', { count: post.readingMinutes }) }}
+          <p *if="meta(post)" class="mt-1.5 text-[11.5px] text-ink/50">
+            {{ meta(post) }}
           </p>
         </div>
       </a>

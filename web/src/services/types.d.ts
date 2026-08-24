@@ -104,6 +104,8 @@ export interface PostSummary {
   readingMinutes: number;
   language: string;
   draft: boolean;
+  /** How many times the post has been opened, counted per reader per window. */
+  views: number;
 }
 
 export interface Post extends PostSummary {

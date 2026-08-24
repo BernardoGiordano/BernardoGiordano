@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from . import config, github, seo
-from .routers import art, cv, posts, projects, session, site, upload
+from .routers import art, cv, posts, projects, session, site, upload, visits
 
 log = logging.getLogger("santella")
 
@@ -51,6 +51,7 @@ app.include_router(art.router)
 app.include_router(cv.router)
 app.include_router(posts.router)
 app.include_router(upload.router)
+app.include_router(visits.router)
 
 
 @app.middleware("http")

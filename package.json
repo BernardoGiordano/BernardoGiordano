@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node tools/dev/serve.mjs --open",
     "serve": "node tools/dev/serve.mjs",
+    "build": "SRL_ROOT=. node srl/tools/delivery/build.mjs --app web",
     "css": "tailwindcss -i ./web/src/app.css -o ./web/app.css --minify",
     "css:watch": "tailwindcss -i ./web/src/app.css -o ./web/app.css --watch",
     "importmap": "node tools/dev/importmap.mjs --check"

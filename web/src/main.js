@@ -15,6 +15,7 @@ import { CV, CvService } from './services/cv-service.js';
 import { EDIT_MODE, EditMode } from './services/edit-mode.js';
 import { MEDIA, MediaService } from './services/media-service.js';
 import { PROJECTS, ProjectsService } from './services/projects-service.js';
+import { VISITS, VisitsService } from './services/visits-service.js';
 
 /**
  * FastAPI answers `{ "detail": "slug_taken" }`, where `ApiClient` reads
@@ -59,6 +60,7 @@ await startApplication({
     provide(ART, () => new ArtService(inject(API_CLIENT)));
     provide(CV, () => new CvService(inject(API_CLIENT)));
     provide(BLOG, () => new BlogService(inject(API_CLIENT)));
+    provide(VISITS, () => new VisitsService(inject(API_CLIENT)));
     provide(MEDIA, () => new MediaService(inject(AUTH_SESSION)));
     provide(EDIT_MODE, () => new EditMode(inject(AUTH_SESSION)));
   },

@@ -3,6 +3,7 @@ import { defineComponent } from '@core/elements/component.js';
 import { inject } from '@core/foundation/inject.js';
 import { effect, signal } from '@core/foundation/reactive.js';
 import { queryParams } from '@core/navigation/router.js';
+import { t } from '@core/localization/i18n.js';
 
 import { BLOG } from '../services/blog-service.js';
 import { EDIT_MODE } from '../services/edit-mode.js';
@@ -91,6 +92,22 @@ export class BlogPage extends SignalElement {
   /** @param {string} iso */
   date(iso) {
     return shortDate(iso);
+  }
+
+  /**
+   * What an entry says about itself under its summary: how long it takes to
+   * read, and how many people have opened it. Joined here rather than as two
+   * spans in the template because the middot between them belongs to neither —
+   * a post nobody has opened yet would otherwise render a separator with
+   * nothing after it, exactly as the tab bar's totals used to.
+   *
+   * @param {import('../services/types.js').PostSummary} post
+   */
+  meta(post) {
+    const parts = [];
+    if (post.readingMinutes) parts.push(t('blog.readingTime', { count: post.readingMinutes }));
+    if (post.views) parts.push(t('blog.views', { count: post.views }));
+    return parts.join(' \u00b7 ');
   }
 
   /** @param {string} name */

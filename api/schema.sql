@@ -227,6 +227,37 @@ CREATE TABLE IF NOT EXISTS media (
   UNIQUE KEY uq_media_digest (digest)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
+-- What has been looked at, as a counter per thing rather than a row per hit.
+-- Two scopes, and nothing else may be written: `tab`, whose ref is one of the
+-- four section keys, and `post`, whose ref is a post's slug. The endpoint checks
+-- the ref against that list and against the posts table, so a caller cannot
+-- invent rows here by posting names nothing on the site is called.
+--
+-- No log behind it. A hit table would answer questions this site does not ask —
+-- when, from where, in what order — and would have to be aged out to stop
+-- growing; a counter answers the one question it does ask and has a fixed size.
+CREATE TABLE IF NOT EXISTS visits (
+  scope    VARCHAR(16)     NOT NULL,
+  ref      VARCHAR(200)    NOT NULL,
+  views    BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  first_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (scope, ref)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+-- One row per reader per thing per window, and the row is a digest: the address
+-- and the user agent go into a salted sha256 and are not stored. That is what
+-- makes a refresh, a back button and a second tab one visit instead of four,
+-- and it is the whole of what this table is for -- it cannot be read backwards
+-- into who visited, only compared against the next request from the same
+-- reader. `purge-visits` drops what is older than the window.
+CREATE TABLE IF NOT EXISTS visit_marks (
+  mark       CHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (mark),
+  KEY idx_visit_marks_time (created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
 INSERT INTO profile (id, name, headline, bio)
 VALUES (1, '', '', '')
 ON DUPLICATE KEY UPDATE id = id;

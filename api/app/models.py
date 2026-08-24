@@ -145,10 +145,24 @@ def post_json(row, tags, include_body: bool) -> dict:
         "readingMinutes": row["reading_minutes"],
         "language": row["language"],
         "draft": bool(row["draft"]),
+        # Joined from visits, and 0 for a post nobody has opened yet: the column
+        # is absent only when a caller selected the post table on its own, which
+        # a reader of this shape should still be able to print.
+        "views": int(row.get("views") or 0),
     }
     if include_body:
         body["body"] = row["body"]
     return body
+
+
+def visit_json(row) -> dict:
+    return {
+        "scope": row["scope"],
+        "ref": row["ref"],
+        "views": int(row["views"]),
+        "firstAt": _iso(row["first_at"]),
+        "lastAt": _iso(row["last_at"]),
+    }
 
 
 # ── request bodies ──────────────────────────────────────────────────────────
@@ -320,3 +334,11 @@ class Credentials(BaseModel):
 
 class Reorder(BaseModel):
     ids: list[int]
+
+
+# The one body a signed-out visitor may post. `scope` and `ref` are checked
+# against what the site actually has in the endpoint, not here: a pattern can say
+# the shape of a slug and cannot say that a post by that name exists.
+class VisitBody(BaseModel):
+    scope: str = Field(pattern=r"^(?:tab|post)$")
+    ref: str = Field(max_length=200, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")

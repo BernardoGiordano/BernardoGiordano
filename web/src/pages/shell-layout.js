@@ -1,6 +1,6 @@
 import { SignalElement } from '@core/elements/signal-element.js';
 import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
+import { effect, signal } from '@core/foundation/reactive.js';
 import { inject } from '@core/foundation/inject.js';
 import { currentPath, navigate } from '@core/navigation/router.js';
 import { setTheme, theme } from '@core/appearance/theme.js';
@@ -10,6 +10,7 @@ import { t } from '@core/localization/i18n.js';
 import { CONTENT } from '../services/content-service.js';
 import { compactNumber, socialHandle } from '../format.js';
 import { EDIT_MODE } from '../services/edit-mode.js';
+import { VISITS } from '../services/visits-service.js';
 import { LinksEditor } from '../components/links-editor.js';
 import { ProfileCard } from '../components/profile-card.js';
 
@@ -32,6 +33,17 @@ export class ShellLayout extends SignalElement {
     // the entire project list on every page, because the totals were that list
     // added up on the client — and /projects was the only page that needed it.
     void inject(CONTENT).load();
+
+    // The shell outlives every tab change, so the section counter belongs here
+    // and not on four pages. An effect because `activeTab` reads the router's
+    // path signal: the layout is not remounted when the tab changes, and a hook
+    // would count the tab the site was opened on and nothing after it. The
+    // service sends each section once per page session, so this fires again only
+    // for a section not yet visited.
+    const stop = effect(() => {
+      inject(VISITS).record('tab', this.activeTab);
+    });
+    this.lifetime.addEventListener('abort', stop);
   }
 
   get tabs() {
@@ -71,8 +83,13 @@ export class ShellLayout extends SignalElement {
     return inject(CONTENT).totals.value?.downloads ?? 0;
   }
 
+  /**
+   * The totals are the project list's own figure, so they belong to that tab
+   * and to no other: on /art or /cv the line is a number about something the
+   * page does not show.
+   */
   get hasTotals() {
-    return this.totalStars > 0 || this.totalDownloads > 0;
+    return this.activeTab === 'projects' && (this.totalStars > 0 || this.totalDownloads > 0);
   }
 
   /**
