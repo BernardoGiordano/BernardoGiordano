@@ -2,7 +2,7 @@ import { defineComponent } from '@core/elements/component.js';
 import { inject } from '@core/foundation/inject.js';
 import { field } from '@core/forms/field.js';
 import { group } from '@core/forms/group.js';
-import { maxLength, required } from '@core/forms/validators.js';
+import { maxLength } from '@core/forms/validators.js';
 import { UiField } from '@components/inputs/ui-field.js';
 
 import { EditorElement } from './editor-element.js';
@@ -58,7 +58,7 @@ export class CvItemEditor extends EditorElement {
 /** @param {CvItem | null} record */
 function buildForm(record) {
   return group({
-    title: field(record?.title ?? '', [required(), maxLength(255)]),
+    title: field(record?.title ?? '', [maxLength(255)]),
     subtitle: field(record?.subtitle ?? '', [maxLength(255)]),
     period: field(record?.period ?? '', [maxLength(64)]),
     detail: field(record?.detail ?? ''),

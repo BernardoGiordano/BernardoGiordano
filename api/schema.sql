@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS cv_sections (
 CREATE TABLE IF NOT EXISTS cv_items (
   id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
   section_id INT UNSIGNED NOT NULL,
-  title      VARCHAR(255) NOT NULL,
+  title      VARCHAR(255) NOT NULL DEFAULT '',
   subtitle   VARCHAR(255) NOT NULL DEFAULT '',
   detail     TEXT         NOT NULL,
   period     VARCHAR(64)  NOT NULL DEFAULT '',

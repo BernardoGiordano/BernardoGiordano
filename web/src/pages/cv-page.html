@@ -66,19 +66,23 @@
             <!-- The margin column carries the period, and for an entry that has
                  none — a competence rather than a job — it carries the title
                  instead. That is what keeps the left edge of the page a single
-                 column of labels and the right edge a single column of prose. -->
+                 column of labels and the right edge a single column of prose.
+                 Both are optional, so the column can come out empty: it keeps
+                 its width anyway, or the prose beside it would not line up with
+                 the entries above and below. -->
             <p class="shrink-0 pt-1 text-[12.5px] leading-snug tabular-nums text-ink/52 sm:w-[96px] sm:text-end">
               {{ item.period || item.title }}
             </p>
 
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-3">
-                <p *if="item.period" class="display text-[20px] text-ink">{{ item.title }}</p>
+                <p *if="item.period && item.title" class="display text-[20px] text-ink">{{ item.title }}</p>
 
-                <!-- `ms-auto`, not `justify-between` alone: an entry with no
-                     period draws no title in this column, and a lone child of a
-                     `justify-between` row sits at its start — which put the
-                     tools in the middle of the page on every skills entry. -->
+                <!-- `ms-auto`, not `justify-between` alone: an entry without
+                     both a period and a title draws no title in this column, and
+                     a lone child of a `justify-between` row sits at its start —
+                     which put the tools in the middle of the page on every
+                     skills entry. -->
                 <row-tools
                   *if="canEdit"
                   class="edit-tools ms-auto"

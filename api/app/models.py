@@ -276,7 +276,7 @@ class CvSectionPatch(BaseModel):
 
 
 class CvItemBody(BaseModel):
-    title: str = Field(max_length=255)
+    title: str = Field(default="", max_length=255)
     subtitle: str = Field(default="", max_length=255)
     detail: str = ""
     period: str = Field(default="", max_length=64)
