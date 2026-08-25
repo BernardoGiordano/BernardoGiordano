@@ -59,6 +59,19 @@ export class AvatarCropper extends SignalElement {
     return MAX_ZOOM;
   }
 
+  /**
+   * The range input's `value`, as the string that property actually holds.
+   *
+   * A property binding assigns to `input.value`, which is typed `string`; the zoom
+   * itself is a number and the browser coerces it, so this only ever read as a type
+   * error rather than a bug. Bound as an attribute instead it would be a bug: for a
+   * range input the `value` attribute is the default, and setting it after the user
+   * has dragged the slider does not move it.
+   */
+  get zoomValue() {
+    return String(this.zoom.value);
+  }
+
   get hasImage() {
     return this.loaded.value;
   }

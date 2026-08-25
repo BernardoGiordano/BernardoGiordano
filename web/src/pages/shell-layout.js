@@ -2,7 +2,7 @@ import { SignalElement } from '@core/elements/signal-element.js';
 import { defineComponent } from '@core/elements/component.js';
 import { effect, signal } from '@core/foundation/reactive.js';
 import { inject } from '@core/foundation/inject.js';
-import { currentPath, navigate } from '@core/navigation/router.js';
+import { RouteOutlet, currentPath, navigate } from '@core/navigation/router.js';
 import { setTheme, theme } from '@core/appearance/theme.js';
 import { AUTH_SESSION } from '@auth/session.js';
 import { t } from '@core/localization/i18n.js';
@@ -185,5 +185,5 @@ await defineComponent({
   tag: 'shell-layout',
   element: ShellLayout,
   module: import.meta.url,
-  uses: [LinksEditor, ProfileCard],
+  uses: [LinksEditor, ProfileCard, RouteOutlet],
 });

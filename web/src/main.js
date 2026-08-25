@@ -8,6 +8,9 @@ import { registerTemplateGlobals } from '@core/template/expression.js';
 
 import { BffCookieTokenStore } from './auth/bff-cookie-store.js';
 import { brandPath, iconPath, isBrand } from './icons.js';
+
+// Re-exported because it is registered below as the `isBrandIcon` template global.
+export { isBrand };
 import { ART, ArtService } from './services/art-service.js';
 import { BLOG, BlogService } from './services/blog-service.js';
 import { CONTENT, ContentService } from './services/content-service.js';
@@ -39,7 +42,7 @@ function fastApiCode(status, body) {
  * @param {string} name
  * @returns {string}
  */
-function icon(name) {
+export function icon(name) {
   if (isBrand(name)) return brandPath(name);
   const path = iconPath(name);
   return path === '' ? iconPath('link') : path;

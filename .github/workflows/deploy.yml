@@ -17,35 +17,27 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # The srl checkout is a submodule and the build needs it: the production
-      # artifact is built by srl's own delivery tooling, which is not part of
-      # the published @srljs/core package.
       - uses: actions/checkout@v4
-        with:
-          submodules: true
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            srl/package-lock.json
+          cache-dependency-path: package-lock.json
 
+      # Both halves of the toolchain come from the lockfile: @srljs/core is the
+      # library the browser loads and @srljs/cli is the build, and cli pins Vite,
+      # parse5 and tsc itself. No srl checkout is involved.
       - run: npm ci
 
-      # srl's toolchain, from srl's own lockfile: Vite, parse5 and tsc are its
-      # devDependencies, and installing them here from a copied pin is how the
-      # two would come to disagree.
-      - name: Install the build toolchain
-        run: npm ci --prefix srl
-
-      # Fails when index.html's import map and the installed @srljs/core disagree,
-      # or when a vendored bundle does not match the hash index.html pins. Both are
-      # load failures in the browser rather than build failures, so they have to be
-      # caught here.
-      - name: Check the import map
-        run: npm run importmap
+      # Two failures that are a blank page rather than a build error, so CI is where
+      # they have to be caught. The import map check compares index.html against the
+      # installed library — entries it omits or hand-edited, a prefix resolving to a
+      # second copy of the framework, an integrity hash that no longer matches its
+      # bytes. The template check type-checks every .html against the same JSDoc
+      # types as the JavaScript beside it.
+      - name: Check
+        run: npm run check
 
       # dist/web/public is the browser root: bundled, minified, hash-named
       # chunks, the template bundle beside them, and an index.html whose import

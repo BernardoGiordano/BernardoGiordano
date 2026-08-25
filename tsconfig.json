@@ -1,0 +1,38 @@
+{
+  // The half that describes srl — `noEmit`, `allowJs`, `checkJs`, the module and
+  // target settings, and the four path mappings that are the type checker's copy of
+  // the import map — comes from the installed package rather than being restated
+  // here. Those targets resolve against the file that declares them, which is inside
+  // node_modules/@srljs/core, so nothing in this block needs a path into the library.
+  //
+  // `srl check templates` reads this file: every .html template is checked against
+  // the same options and the same JSDoc types as the JavaScript beside it, which is
+  // what makes the dialect statically checkable without compiling anything.
+  "extends": "@srljs/core/tsconfig.base.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    // `types` is explicit rather than "every @types package installed", so a new
+    // dependency cannot quietly widen the global scope of browser code. `node` is
+    // here for tools/dev/*.mjs; the cost is that `process` also type-checks inside
+    // web/src, where it does not exist at runtime.
+    // No `paths` block here, on purpose. It would replace the inherited one wholesale
+    // rather than extend it — paths do not merge, and an empty object replaces it
+    // with nothing — so `@core/` would stop resolving and every import through it
+    // would be reported as a missing module. The site's own two specifiers, `marked`
+    // and `dompurify`, are real packages and resolve through node_modules the
+    // ordinary way; the import map points the browser at the copies of those same
+    // versions in web/vendor.
+    "types": ["node"]
+  },
+  "include": ["web/**/*.js", "tools/**/*.mjs"],
+  // web/vendor holds third-party bytes verbatim, copied from node_modules by
+  // tools/dev/vendor.mjs. Type-checking them means thousands of errors from files
+  // nobody here wrote and the browser never checks.
+  "exclude": ["node_modules", "web/vendor", "dist", "**/app.css"]
+}
