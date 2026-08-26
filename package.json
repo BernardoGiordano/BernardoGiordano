@@ -6,8 +6,8 @@
   "description": "Personal site: projects, art, CV and blog, built on srl",
   "license": "MIT",
   "scripts": {
-    "start": "srl serve --app web --open --proxy /api/=http://127.0.0.1:8001 --proxy /auth/=http://127.0.0.1:8001 --proxy /media/=http://127.0.0.1:8001",
-    "serve": "srl serve --app web --proxy /api/=http://127.0.0.1:8001 --proxy /auth/=http://127.0.0.1:8001 --proxy /media/=http://127.0.0.1:8001",
+    "start": "srl serve --app web --open --proxy /api/=http://127.0.0.1:8001 --proxy /auth/=http://127.0.0.1:8001 --proxy /media/=http://127.0.0.1:8001 --proxy /feed.xml=http://127.0.0.1:8001 --proxy /sitemap.xml=http://127.0.0.1:8001 --proxy /robots.txt=http://127.0.0.1:8001",
+    "serve": "srl serve --app web --proxy /api/=http://127.0.0.1:8001 --proxy /auth/=http://127.0.0.1:8001 --proxy /media/=http://127.0.0.1:8001 --proxy /feed.xml=http://127.0.0.1:8001 --proxy /sitemap.xml=http://127.0.0.1:8001 --proxy /robots.txt=http://127.0.0.1:8001",
     "build": "srl build --app web",
     "check": "srl check importmap --app web && srl check templates",
     "importmap": "srl check importmap --app web",
