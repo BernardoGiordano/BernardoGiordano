@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import config, github, seo
+from . import config, packages, seo
 from .routers import art, cv, posts, projects, session, site, upload, visits
 
 log = logging.getLogger("santella")
@@ -26,19 +26,20 @@ async def lifespan(app: FastAPI):
 
 
 async def _poll_forever():
-    """GitHub stats, in this process rather than in cron: one deployment unit, and
-    both halves of `refresh_all` already refuse to poll something they polled
-    recently, so the loop interval is a floor and not a schedule anything depends
+    """GitHub and registry stats, in this process rather than in cron: one
+    deployment unit, and every half of `refresh_everything` already refuses to
+    poll something it polled recently, so the loop interval is a floor and not a schedule anything depends
     on. That guard is what keeps a run of deploys — supervisor restarts the
     process, and the first thing it does is come through here — from spending the
     hour's whole GitHub allowance on sweeps nobody asked for."""
     while True:
         try:
-            result = await asyncio.to_thread(github.refresh_all)
-            if result["written"] or any(not owner["skipped"] for owner in result["owners"]):
-                log.info("github stats refreshed: %s", result)
+            result = await asyncio.to_thread(packages.refresh_everything)
+            noisy = result["written"] or result["packages"]["written"]
+            if noisy or any(not owner["skipped"] for owner in result["owners"]):
+                log.info("stats refreshed: %s", result)
         except Exception:
-            log.exception("github refresh failed")
+            log.exception("stats refresh failed")
         await asyncio.sleep(config.GITHUB_REFRESH_HOURS * 3600)
 
 

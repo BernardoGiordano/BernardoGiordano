@@ -74,6 +74,11 @@ export class ShellLayout extends SignalElement {
    * it: an override is one project card's correction, not a fact about an
    * account, and adding it to a total of what GitHub reported would be counting
    * one repository twice.
+   *
+   * A declared package does enter into it, by substitution and not addition: its
+   * registry's count replaces the GitHub figure for that repository, the same
+   * rule the card applies, so the line under the tabs and the chips above it
+   * agree about what a download is.
    */
   get totalStars() {
     return inject(CONTENT).totals.value?.stars ?? 0;

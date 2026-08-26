@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import db, github
+from .. import db, packages
 from ..auth import require_writer
 from ..models import LinkBody, LinkPatch, ProfilePatch, Reorder, link_json, profile_json, totals_json
 
@@ -39,7 +39,7 @@ def site():
         return {
             "profile": profile_json(profile),
             "links": [link_json(row) for row in links],
-            "totals": totals_json(github.owned_totals(connection)),
+            "totals": totals_json(packages.site_totals(connection)),
         }
 
 

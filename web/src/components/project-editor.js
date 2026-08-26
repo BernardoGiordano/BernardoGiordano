@@ -14,6 +14,22 @@ import { listToText, textToList } from '../forms.js';
 const ROLES = ['author', 'maintainer', 'contributor'];
 const STATUSES = ['active', 'maintained', 'archived'];
 
+/**
+ * Where a project's downloads are counted, when GitHub is not where they happen.
+ * The empty string is the first option and means GitHub: a select with no null
+ * choice would make "published to npm" impossible to take back.
+ */
+const REGISTRIES = ['', 'npm', 'dockerhub'];
+
+/**
+ * An npm name — `@scope/name` or `name` — or a Docker Hub `namespace/name`,
+ * where an official image is `library/nginx`. One pattern for both, matching
+ * what `models.registry_shaped` accepts server-side: the field cannot know which
+ * registry is selected, and a name the wrong registry would not recognise simply
+ * fails to poll.
+ */
+const PACKAGE = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*(?:\/[a-z0-9][a-z0-9._-]*)?$/u;
+
 /** `owner/name`, or nothing. The same rule `ProjectBody` enforces server-side. */
 const REPO = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u;
 
@@ -49,6 +65,15 @@ export class ProjectEditor extends EditorElement {
     return STATUSES;
   }
 
+  get registries() {
+    return REGISTRIES;
+  }
+
+  /** @param {string} registry */
+  registryLabel(registry) {
+    return registry === '' ? 'editor.registryNone' : `projects.registry${registry.charAt(0).toUpperCase()}${registry.slice(1)}`;
+  }
+
   /** @param {string} role */
   roleLabel(role) {
     return `projects.role${role.charAt(0).toUpperCase()}${role.slice(1)}`;
@@ -79,6 +104,10 @@ export class ProjectEditor extends EditorElement {
       platforms: textToList(values.platforms),
       tech: textToList(values.tech),
       downloadsOverride: values.downloadsOverride.trim() === '' ? null : Number(values.downloadsOverride),
+      packageRegistry: values.packageRegistry,
+      // A name with no registry selected polls nothing and would sit in the
+      // record looking like it did, so the pair is cleared together.
+      packageName: values.packageRegistry === '' ? '' : values.packageName.trim(),
     };
 
     const projects = inject(PROJECTS);
@@ -107,6 +136,8 @@ function buildForm(record) {
         : String(record.downloadsOverride),
       [min(0), max(Number.MAX_SAFE_INTEGER)],
     ),
+    packageRegistry: field(record?.packageRegistry ?? '', [oneOf(REGISTRIES)]),
+    packageName: field(record?.packageName ?? '', [pattern(PACKAGE), maxLength(160)]),
   });
 }
 

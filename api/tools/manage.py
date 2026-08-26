@@ -3,7 +3,7 @@ in the life of the site and a CLI framework would be more code than the commands
 
   init-db                      apply schema.sql
   set-password <user> <name>   create or repoint the single account (prompts)
-  refresh-stats [--force]      poll GitHub now
+  refresh-stats [--force]      poll GitHub and the package registries now
   purge-sessions               drop expired sessions, old login attempts and
                                spent visit marks
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app import auth, db, github  # noqa: E402
+from app import auth, db, packages  # noqa: E402
 from app.routers import visits  # noqa: E402
 
 
@@ -26,6 +26,8 @@ from app.routers import visits  # noqa: E402
 ADDED_COLUMNS = (
     ("profile", "now_text", "VARCHAR(255) NOT NULL DEFAULT '' AFTER `current`"),
     ("profile", "available", "VARCHAR(128) NOT NULL DEFAULT '' AFTER now_text"),
+    ("projects", "package_registry", "VARCHAR(16) NOT NULL DEFAULT '' AFTER downloads_override"),
+    ("projects", "package_name", "VARCHAR(160) NOT NULL DEFAULT '' AFTER package_registry"),
 )
 
 
@@ -75,7 +77,7 @@ def set_password(username: str, display_name: str):
 
 
 def refresh_stats(force: bool):
-    print(github.refresh_all(force=force))
+    print(packages.refresh_everything(force=force))
 
 
 def purge_sessions():

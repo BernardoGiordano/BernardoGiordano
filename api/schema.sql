@@ -82,6 +82,11 @@ CREATE TABLE IF NOT EXISTS projects (
   platforms          JSON         NOT NULL,
   tech               JSON         NOT NULL,
   downloads_override BIGINT       NULL,
+  -- Where the download figure comes from when GitHub is not where it happens: a
+  -- library is installed and an image is pulled, and neither goes through a
+  -- releases page. Empty means GitHub. See `package_stats`.
+  package_registry   VARCHAR(16)  NOT NULL DEFAULT '',
+  package_name       VARCHAR(160) NOT NULL DEFAULT '',
   position           INT          NOT NULL DEFAULT 0,
   created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -108,6 +113,34 @@ CREATE TABLE IF NOT EXISTS github_stats (
   refreshed_at     DATETIME     NULL DEFAULT NULL,
   last_error       VARCHAR(255) NULL,
   PRIMARY KEY (repo)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+-- The download counts GitHub cannot see, cached the same way `github_stats` is:
+-- the poller writes only here, so a registry that is down can never damage an
+-- edited card.
+--
+-- Keyed by (registry, name) and not by repo, because they are different things.
+-- One repository can publish several packages, a package can outlive the
+-- repository it was built from, and a project with no repository at all can
+-- still ship one.
+--
+-- npm's number is not all-time and cannot be: the service answers a window of at
+-- most 18 months and keeps only a few years of them, so what is stored is the
+-- sum of the windows it would answer. Docker Hub's `pull_count` is genuinely
+-- all-time. The two are added together anyway, because the alternative is two
+-- numbers on a card that has room for one.
+CREATE TABLE IF NOT EXISTS package_stats (
+  registry     VARCHAR(16)  NOT NULL,
+  name         VARCHAR(160) NOT NULL,
+  -- NULL is "not known", not "none", for the reason it is in `owned_repos`: SUM
+  -- skips it, so a registry that did not answer undercounts by that package
+  -- rather than reporting a confident wrong total.
+  downloads    BIGINT       NULL,
+  -- NULL until a poll actually succeeds, so a placeholder row cannot be mistaken
+  -- for a fresh one and skipped for a whole interval.
+  refreshed_at DATETIME     NULL DEFAULT NULL,
+  last_error   VARCHAR(255) NULL,
+  PRIMARY KEY (registry, name)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
 -- Every repository the site's owners own, which is a different question from the

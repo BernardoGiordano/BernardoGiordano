@@ -20,7 +20,9 @@ export interface SiteLink {
 
 /**
  * The tab bar's two numbers, summed by the backend over every non-fork
- * repository the accounts in GITHUB_OWNERS own — not over the project list.
+ * repository the accounts in GITHUB_OWNERS own — not over the project list —
+ * with a registry's count standing in for GitHub's wherever a project declares
+ * a package.
  */
 export interface SiteTotals {
   stars: number;
@@ -41,6 +43,19 @@ export interface ProjectStats {
   refreshedAt: string | null;
 }
 
+/**
+ * A registry's own count for a project, where GitHub is not where the downloads
+ * happen. npm's figure is every install the registry will still answer for and
+ * not strictly all-time; Docker Hub's `pull_count` is.
+ */
+export interface PackageStats {
+  registry: string;
+  name: string;
+  downloads: number | null;
+  url: string;
+  refreshedAt: string | null;
+}
+
 export interface Project {
   id: number;
   name: string;
@@ -55,8 +70,11 @@ export interface Project {
   platforms: readonly string[];
   tech: readonly string[];
   downloadsOverride: number | null;
+  packageRegistry: string;
+  packageName: string;
   position: number;
   stats: ProjectStats | null;
+  packageStats: PackageStats | null;
 }
 
 export interface ArtWork {

@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from . import packages
 from .db import as_list
 
 # ── serialisers: DB row (snake_case) -> JSON (camelCase) ─────────────────────
@@ -61,6 +62,21 @@ def stats_json(row) -> dict | None:
     }
 
 
+def package_json(row) -> dict | None:
+    """The registry's own figure for a project, or None where a project names no
+    package. Shaped like `stats_json`: a null the card can test rather than a
+    field it has to know is meaningless."""
+    if row is None or not row.get("registry"):
+        return None
+    return {
+        "registry": row["registry"],
+        "name": row["name"],
+        "downloads": row["downloads"],
+        "url": packages.url(row["registry"], row["name"]),
+        "refreshedAt": _iso(row["refreshed_at"]),
+    }
+
+
 def totals_json(row) -> dict:
     """The tab bar's two numbers. Not derived from the project list: `owned_repos`
     is every repository the accounts in GITHUB_OWNERS own, and the curated list is
@@ -73,7 +89,7 @@ def totals_json(row) -> dict:
     }
 
 
-def project_json(row, stats=None) -> dict:
+def project_json(row, stats=None, package=None) -> dict:
     return {
         "id": row["id"],
         "name": row["name"],
@@ -88,8 +104,11 @@ def project_json(row, stats=None) -> dict:
         "platforms": as_list(row["platforms"]),
         "tech": as_list(row["tech"]),
         "downloadsOverride": row["downloads_override"],
+        "packageRegistry": row["package_registry"],
+        "packageName": row["package_name"],
         "position": row["position"],
         "stats": stats_json(stats),
+        "packageStats": package_json(package),
     }
 
 
@@ -209,6 +228,29 @@ class ProjectBody(BaseModel):
     platforms: list[str] = []
     tech: list[str] = []
     downloadsOverride: int | None = None
+    packageRegistry: str = Field(default="", max_length=16)
+    packageName: str = Field(default="", max_length=160)
+
+    @field_validator("packageRegistry")
+    @classmethod
+    def known_registry(cls, value):
+        if value not in (None, "") and value not in packages.REGISTRIES:
+            raise ValueError(f"registry must be one of {', '.join(packages.REGISTRIES)}")
+        return value
+
+    @field_validator("packageName")
+    @classmethod
+    def registry_shaped(cls, value):
+        """Checked against both registries rather than against the one this body
+        also carries, because a validator sees one field at a time and the pair is
+        re-checked where it is used. What this stops is the only thing that
+        matters here: the name is interpolated into a request path, so anything
+        that is not a package name is refused before it can choose one."""
+        if value in (None, ""):
+            return value
+        if not any(packages.valid(registry, value) for registry in packages.REGISTRIES):
+            raise ValueError("package must be an npm name or a docker namespace/name")
+        return value
 
     @field_validator("repo")
     @classmethod
@@ -236,6 +278,8 @@ class ProjectPatch(ProjectBody):
     kind: str | None = Field(default=None, max_length=32)
     role: str | None = Field(default=None, max_length=32)
     status: str | None = Field(default=None, max_length=32)
+    packageRegistry: str | None = Field(default=None, max_length=16)
+    packageName: str | None = Field(default=None, max_length=160)
 
 
 class Track(BaseModel):

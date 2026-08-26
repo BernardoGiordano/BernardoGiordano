@@ -39,6 +39,8 @@
     "empty": "Nothing here yet.",
     "openSource": "Open source",
     "closedSource": "Closed source",
+    "registryNpm": "npm",
+    "registryDockerhub": "Docker Hub",
     "stars": {
       "one": "{count} star",
       "other": "{count} stars"
@@ -56,6 +58,7 @@
     "more": "More repositories on GitHub",
     "starCta": "{count} stars. Star it on GitHub",
     "downloadsCount": "{count} downloads",
+    "downloadsFrom": "{count} downloads from {source}",
     "forksCount": "{count} forks",
     "lastRelease": "last release {when}",
     "lastReleaseTagged": "{tag}, released {when}",
@@ -180,6 +183,11 @@
     "listHint": "Comma separated.",
     "downloadsOverride": "Downloads override",
     "downloadsHint": "Only for downloads GitHub cannot count. Leave empty otherwise.",
+    "packageRegistry": "Package registry",
+    "packageRegistryHint": "Its downloads stand in for the GitHub ones.",
+    "registryNone": "GitHub releases",
+    "packageName": "Package",
+    "packageNameHint": "npm: @scope/name. Docker Hub: namespace/name.",
     "role": "Role",
     "status": "Status",
     "openSource": "Open source",

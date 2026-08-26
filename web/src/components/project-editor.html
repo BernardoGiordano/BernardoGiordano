@@ -99,6 +99,34 @@
 
     <div class="edit-grid edit-grid-2">
       <ui-field
+        name="packageRegistry"
+        label="{{ t('editor.packageRegistry') }}"
+        hint="{{ t('editor.packageRegistryHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.packageRegistry"
+      >
+        <select class="edit-input">
+          <option *for="option of registries; key: option" [value]="option">{{ t(registryLabel(option)) }}</option>
+        </select>
+      </ui-field>
+
+      <ui-field
+        name="packageName"
+        label="{{ t('editor.packageName') }}"
+        hint="{{ t('editor.packageNameHint') }}"
+        label-class="edit-label"
+        error-class="edit-error"
+        hint-class="edit-hint"
+        [.field]="form.fields.packageName"
+      >
+        <input class="edit-input" />
+      </ui-field>
+    </div>
+
+    <div class="edit-grid edit-grid-2">
+      <ui-field
         name="role"
         label="{{ t('editor.role') }}"
         label-class="edit-label"

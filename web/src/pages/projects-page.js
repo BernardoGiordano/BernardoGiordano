@@ -49,9 +49,36 @@ export class ProjectsPage extends SignalElement {
     return this.errorKey.value === '' ? '' : t(this.errorKey.value);
   }
 
-  /** @param {Project} project */
+  /**
+   * The one download figure a card prints, and where it came from.
+   *
+   * Three sources, in the order they overrule each other. A registry stands in
+   * for GitHub rather than adding to it: a library is installed and an image is
+   * pulled, neither goes through a releases page, and a project that publishes
+   * both a package and a tagged release would otherwise have the same work
+   * counted twice. The manual override still wins over both, because it exists
+   * for the downloads nothing counts at all — a homebrew passed around on a
+   * console — and a number typed in by hand is a correction, not a guess.
+   *
+   * @param {Project} project
+   * @returns {{ count: number, source: string, url: string } | null}
+   */
   downloads(project) {
-    return project.downloadsOverride ?? project.stats?.downloads ?? null;
+    if (project.downloadsOverride !== null) {
+      return { count: project.downloadsOverride, source: '', url: '' };
+    }
+    const fromRegistry = project.packageStats;
+    if (fromRegistry !== null && fromRegistry.downloads !== null) {
+      return {
+        count: fromRegistry.downloads,
+        source: t(`projects.registry${this.#capitalise(fromRegistry.registry)}`),
+        url: fromRegistry.url,
+      };
+    }
+    if (project.stats?.downloads) {
+      return { count: project.stats.downloads, source: '', url: '' };
+    }
+    return null;
   }
 
   /**
@@ -71,6 +98,12 @@ export class ProjectsPage extends SignalElement {
   tags(project) {
     const tags = [...project.platforms];
     if (project.kind !== '') tags.push(this.#capitalise(project.kind));
+    // Where the download number came from, when it did not come from GitHub.
+    // Here rather than beside the count because it is a fact about the project —
+    // this is a thing you install — and the chip that carries the number has
+    // room for a number.
+    const registry = project.packageStats?.registry ?? '';
+    if (registry !== '') tags.push(t(`projects.registry${this.#capitalise(registry)}`));
     tags.push(this.#licence(project));
     return tags;
   }
@@ -131,13 +164,20 @@ export class ProjectsPage extends SignalElement {
     const metrics = [];
 
     const downloads = this.downloads(project);
-    if (downloads !== null && downloads > 0) {
+    if (downloads !== null && downloads.count > 0) {
+      const count = compactNumber(downloads.count);
       metrics.push({
         key: 'downloads',
-        text: compactNumber(downloads),
+        text: count,
         icon: 'download',
         mark: 'mark-downloads',
-        label: t('projects.downloadsCount', { count: compactNumber(downloads) }),
+        // Which registry counted them, in the title rather than in the chip: the
+        // chip has room for a number and the word beside it would be the fourth
+        // thing competing for a row that already carries five.
+        label:
+          downloads.source === ''
+            ? t('projects.downloadsCount', { count })
+            : t('projects.downloadsFrom', { count, source: downloads.source }),
       });
     }
 

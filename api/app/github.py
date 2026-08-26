@@ -343,29 +343,6 @@ def refresh_owner(owner: str, force: bool = False) -> dict:
     }
 
 
-def owned_totals(connection) -> dict:
-    """The two numbers the tab bar prints, and when they were last true.
-
-    Forks are excluded here rather than at fetch time, so changing that rule is
-    changing this line. SUM skips NULL, so a repository whose releases could not
-    be read is absent from the downloads figure rather than counted as a zero.
-    """
-    row = db.one(
-        connection,
-        """SELECT COALESCE(SUM(stars), 0) AS stars, COALESCE(SUM(downloads), 0) AS downloads,
-                  COUNT(*) AS repos, MAX(refreshed_at) AS refreshed_at
-           FROM owned_repos WHERE is_fork = 0""",
-    )
-    return {
-        # SUM answers with a Decimal, which json cannot serialise and which no
-        # caller wants: these are counts.
-        "stars": int(row["stars"] or 0),
-        "downloads": int(row["downloads"] or 0),
-        "repos": int(row["repos"] or 0),
-        "refreshed_at": row["refreshed_at"],
-    }
-
-
 def refresh_all(force: bool = False) -> dict:
     with db.connect() as connection:
         repos = [row["repo"] for row in db.rows(connection, "SELECT DISTINCT repo FROM projects WHERE repo <> ''")]

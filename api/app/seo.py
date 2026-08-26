@@ -81,41 +81,124 @@ def render_shell(shell: str, path: str) -> str:
     return shell.replace("</head>", f"  {_meta(title, description, url, image)}\n  </head>", 1)
 
 
+def _absolute(url: str) -> str:
+    """A path the site serves, as an address a reader can fetch. A feed is read
+    somewhere else by definition, so `/media/…` in it resolves against whatever
+    host the reader happens to be on."""
+    if url == "" or url.startswith(("http://", "https://")):
+        return url
+    return f"{config.SITE_ORIGIN}{url}"
+
+
+def _element(name: str, value) -> str:
+    return f"      <{name}>{escape(str(value))}</{name}>\n"
+
+
 def feed() -> str:
+    """RSS 2.0, with the two extensions every reader understands: `dc:creator`
+    for the byline and Media RSS for the cover.
+
+    Media RSS and not `<enclosure>`, which is the older spelling of the same
+    idea: `enclosure` requires a byte length, and the length that is stored is
+    the source image's rather than the WebP the site actually serves. A number
+    that is wrong is worse than an element that is absent, and `media:content`
+    asks for a type and a URL, both of which are known.
+
+    Summaries and not full posts. `description` carries the summary the post
+    already has, or its opening paragraph, because rendering the body would mean
+    a Markdown implementation in this process that agrees with the one in the
+    browser — and two renderers that disagree is a feed that quietly publishes
+    something the site does not show.
+    """
     with db.connect() as connection:
-        profile = db.one(connection, "SELECT name, headline FROM profile WHERE id = 1")
+        profile = db.one(connection, "SELECT name, headline, bio, avatar_url FROM profile WHERE id = 1")
         posts = db.rows(
             connection,
-            """SELECT slug, title, summary, body, published_on, updated_at FROM posts
-               WHERE draft = 0 ORDER BY published_on DESC, id DESC LIMIT 40""",
+            """SELECT id, slug, title, summary, body, language, cover_url, published_on, updated_at
+               FROM posts WHERE draft = 0 ORDER BY published_on DESC, id DESC LIMIT 40""",
         )
+        # One query for every tag in the feed rather than one per item: a
+        # category list is the cheapest thing here and should not be forty round
+        # trips.
+        tagged = {}
+        if posts:
+            placeholders = ", ".join(["%s"] * len(posts))
+            for row in db.rows(
+                connection,
+                f"SELECT post_id, tag FROM post_tags WHERE post_id IN ({placeholders}) ORDER BY tag",
+                tuple(post["id"] for post in posts),
+            ):
+                tagged.setdefault(row["post_id"], []).append(row["tag"])
 
     title = profile["name"] or config.SITE_TITLE
+    description = profile["headline"] or profile["bio"][:200] or title
+    avatar = _absolute(profile["avatar_url"] or "")
+
     items = []
     for post in posts:
         link = f"{config.SITE_ORIGIN}/blog/{post['slug']}"
         stamp = datetime.combine(post["published_on"], datetime.min.time()).replace(tzinfo=timezone.utc)
         summary = post["summary"] or _first_paragraph(post["body"], 400)
-        items.append(
-            "    <item>\n"
-            f"      <title>{escape(post['title'])}</title>\n"
-            f"      <link>{escape(link)}</link>\n"
-            f"      <guid isPermaLink=\"true\">{escape(link)}</guid>\n"
-            f"      <pubDate>{format_datetime(stamp)}</pubDate>\n"
-            f"      <description>{escape(summary)}</description>\n"
-            "    </item>"
+
+        item = "    <item>\n"
+        item += _element("title", post["title"])
+        item += _element("link", link)
+        item += f'      <guid isPermaLink="true">{escape(link)}</guid>\n'
+        item += f"      <pubDate>{format_datetime(stamp)}</pubDate>\n"
+        item += _element("dc:creator", title)
+        # The tags the post carries, which on this blog are what a reader would
+        # subscribe to a part of: a review, four stars, Ernst Jünger.
+        for tag in tagged.get(post["id"], []):
+            item += _element("category", tag)
+        item += _element("description", summary)
+        cover = _absolute(post["cover_url"])
+        if cover:
+            # Every cover is a WebP: media.store re-encodes whatever was uploaded,
+            # so the type is known without reading the file.
+            item += f'      <media:content url="{escape(cover)}" type="image/webp" medium="image" />\n'
+        item += "    </item>"
+        items.append(item)
+
+    # The language of the writing, not of the interface. All fifty posts are in
+    # Italian and an `en` here would tell a reader's language filter to hide
+    # them; taking it from the posts means the day one is written in English the
+    # channel stops claiming otherwise on its own.
+    languages = [post["language"] for post in posts if post["language"]]
+    language = max(set(languages), key=languages.count) if languages else "it"
+
+    built = max((post["updated_at"] for post in posts), default=None)
+
+    channel = "  <channel>\n"
+    channel += f"    <title>{escape(title)}</title>\n"
+    channel += f"    <link>{escape(config.SITE_ORIGIN)}</link>\n"
+    channel += f"    <description>{escape(description)}</description>\n"
+    channel += f"    <language>{escape(language)}</language>\n"
+    channel += f'    <atom:link href="{escape(config.SITE_ORIGIN)}/feed.xml" rel="self" type="application/rss+xml" />\n'
+    if built is not None:
+        channel += f"    <lastBuildDate>{format_datetime(built.replace(tzinfo=timezone.utc))}</lastBuildDate>\n"
+    # Six hours, matching nothing in particular except the rate at which this
+    # site changes: a reader that honours it stops asking forty times a day.
+    channel += "    <ttl>360</ttl>\n"
+    channel += f"    <generator>{escape(config.SITE_TITLE)}</generator>\n"
+    channel += "    <docs>https://www.rssboard.org/rss-specification</docs>\n"
+    if avatar:
+        channel += (
+            "    <image>\n"
+            f"      <url>{escape(avatar)}</url>\n"
+            f"      <title>{escape(title)}</title>\n"
+            f"      <link>{escape(config.SITE_ORIGIN)}</link>\n"
+            "    </image>\n"
         )
+    channel += "\n".join(items)
+    channel += "\n  </channel>\n"
 
     return (
         '<?xml version="1.0" encoding="utf-8"?>\n'
-        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
-        "  <channel>\n"
-        f"    <title>{escape(title)}</title>\n"
-        f"    <link>{escape(config.SITE_ORIGIN)}</link>\n"
-        f"    <description>{escape(profile['headline'] or title)}</description>\n"
-        f'    <atom:link href="{escape(config.SITE_ORIGIN)}/feed.xml" rel="self" type="application/rss+xml" />\n'
-        + "\n".join(items)
-        + "\n  </channel>\n</rss>\n"
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"\n'
+        '     xmlns:dc="http://purl.org/dc/elements/1.1/"\n'
+        '     xmlns:media="http://search.yahoo.com/mrss/">\n'
+        + channel
+        + "</rss>\n"
     )
 
 

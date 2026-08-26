@@ -47,6 +47,12 @@ GITHUB_OWNERS = tuple(
     if owner.strip()
 )
 
+# The registries are cheap: one request per package against services with no
+# published rate limit worth planning around, and a handful of packages. Kept
+# separate from GITHUB_REFRESH_HOURS so that tightening one does not tighten the
+# sweep that costs forty GitHub requests.
+PACKAGE_REFRESH_HOURS = int(os.environ.get("PACKAGE_REFRESH_HOURS", "12"))
+
 # How long one reader counts as the same reader. A refresh, the back button and
 # the second tab they opened are one visit; coming back tomorrow is another.
 VISIT_WINDOW_HOURS = int(os.environ.get("VISIT_WINDOW_HOURS", "6"))
