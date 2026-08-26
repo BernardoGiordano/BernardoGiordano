@@ -40,8 +40,10 @@ jobs:
         run: npm run check
 
       # dist/web/public is the browser root: bundled, minified, hash-named
-      # chunks, the template bundle beside them, and an index.html whose import
-      # map pins a sha384 for every one of them. dist/web/artifact.json is the
+      # chunks, one minified file per template beside them — each fetched by the
+      # component that needs it rather than all of them at startup — and an
+      # index.html whose import map pins a sha384 for every chunk.
+      # dist/web/artifact.json is the
       # report — what was emitted, what it hashes to, and what Cache-Control
       # each file expects, which is what deploy/nginx.conf.example is written
       # against.
