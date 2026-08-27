@@ -39,6 +39,12 @@ jobs:
       - name: Check
         run: npm run check
 
+      # The browser suite, in the Chrome the runner image already has. It is here
+      # rather than in a workflow of its own for the same reason the check is: what
+      # this job must not do is deploy a tree that has not answered for itself.
+      - name: Test
+        run: npm test
+
       # dist/web/public is the browser root: bundled, minified, hash-named
       # chunks, one minified file per template beside them — each fetched by the
       # component that needs it rather than all of them at startup — and an

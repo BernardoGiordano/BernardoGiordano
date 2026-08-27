@@ -1,5 +1,6 @@
 import { token } from '@core/foundation/inject.js';
 import { signal } from '@core/foundation/reactive.js';
+import { resource } from '@core/foundation/resource.js';
 
 /** @import { ApiClient } from '@core/http/client.js' */
 /** @import { CvItem, CvSection } from './types.js' */
@@ -7,30 +8,42 @@ import { signal } from '@core/foundation/reactive.js';
 /** @type {import('@core/foundation/types.js').InjectionToken<CvService>} */
 export const CV = token('CvService');
 
+/** What the read is seeded with. Screens bind `sections`, so nothing renders it. */
+/** @type {{ sections: readonly CvSection[] }} */
+const EMPTY = { sections: [] };
+
 export class CvService {
   #client;
 
   /** @type {import('@preact/signals-core').Signal<readonly CvSection[]>} */
   sections = signal([]);
 
-  isLoading = signal(false);
   loaded = signal(false);
+
+  /** The read. art-service.js says what this owns and why `sections` is not it. */
+  #read = resource((signal) => this.#fetch(signal), { initial: EMPTY });
+
+  isLoading = this.#read.pending;
+  failed = this.#read.failed;
 
   /** @param {ApiClient} client */
   constructor(client) {
     this.#client = client;
   }
 
+  /**
+   * @param {AbortSignal} signal
+   * @returns {Promise<{ sections: readonly CvSection[] }>}
+   */
+  #fetch(signal) {
+    return this.#client.get('/cv', undefined, signal);
+  }
+
   async load() {
-    this.isLoading.value = true;
-    try {
-      /** @type {{ sections: readonly CvSection[] }} */
-      const body = await this.#client.get('/cv');
-      this.sections.value = body.sections;
-      this.loaded.value = true;
-    } finally {
-      this.isLoading.value = false;
-    }
+    const body = await this.#read.reload();
+    if (body === undefined) return;
+    this.sections.value = body.sections;
+    this.loaded.value = true;
   }
 
   /** @param {{ title: string, kind?: string }} section */

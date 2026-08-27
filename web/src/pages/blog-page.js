@@ -85,6 +85,18 @@ export class BlogPage extends SignalElement {
     return inject(BLOG).isLoading;
   }
 
+  get failed() {
+    return inject(BLOG).failed;
+  }
+
+  /**
+   * What the failure line's button asks for: the page the URL names, not the one
+   * that failed to arrive — the tag is in the URL and the offset starts over.
+   */
+  retry() {
+    void inject(BLOG).load({ tag: this.tag });
+  }
+
   get hasMore() {
     return this.rows.value.length < this.total.value;
   }

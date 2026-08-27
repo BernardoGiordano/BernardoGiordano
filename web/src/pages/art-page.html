@@ -10,6 +10,11 @@
 
   <p *if="isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
 
+  <p *if="failed" class="flex flex-wrap items-center gap-3 py-6 text-[13px] text-muted" role="alert">
+    {{ t('site.failed') }}
+    <button type="button" class="btn btn-quiet" (click)="retry()">{{ t('site.retry') }}</button>
+  </p>
+
   <!-- One long scroll, a block per release: the cover and what you can do with
        it on the left, everything the record says on the right. A book takes the
        same block with a portrait cover and a blurb where the player goes. -->
@@ -126,5 +131,5 @@
     </li>
   </ul>
 
-  <p *if="!isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('art.empty') }}</p>
+  <p *if="!isLoading && !failed && !rows.length" class="py-6 text-[13px] text-muted">{{ t('art.empty') }}</p>
 </section>

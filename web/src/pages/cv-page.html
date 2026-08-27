@@ -15,6 +15,11 @@
 
   <p *if="isLoading && !sections.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
 
+  <p *if="failed" class="flex flex-wrap items-center gap-3 py-6 text-[13px] text-muted" role="alert">
+    {{ t('site.failed') }}
+    <button type="button" class="btn btn-quiet" (click)="retry()">{{ t('site.retry') }}</button>
+  </p>
+
   <!-- Years in the margin and nothing in a box: the period is a column of its
        own, right-aligned against the entry it belongs to, so the dates line up
        down the page and the titles start at one edge. -->
@@ -127,7 +132,7 @@
     </div>
   </div>
 
-  <p *if="!isLoading && !sections.length" class="py-6 text-[13px] text-muted">{{ t('cv.empty') }}</p>
+  <p *if="!isLoading && !failed && !sections.length" class="py-6 text-[13px] text-muted">{{ t('cv.empty') }}</p>
 
   <div *if="sections.length" class="mt-10">
     <hr class="grad-rule" />

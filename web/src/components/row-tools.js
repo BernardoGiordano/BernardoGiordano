@@ -1,6 +1,7 @@
 import { SignalElement } from '@core/elements/signal-element.js';
 import { defineComponent } from '@core/elements/component.js';
 import { signal } from '@core/foundation/reactive.js';
+import { schedule } from '@core/foundation/clock.js';
 import { t } from '@core/localization/i18n.js';
 
 /**
@@ -37,14 +38,22 @@ export class RowTools extends SignalElement {
 
   confirming = signal(false);
 
-  /** @type {number | undefined} */
-  #timer;
+  /**
+   * Cancels the arm timeout, or `undefined` when nothing is armed. Through the
+   * library's clock rather than `setTimeout`, because a component that owns its
+   * own timer leaves a suite one move — sleep past it — and `assert nothing
+   * happened within 5 seconds` is both slow and a weaker claim than the one the
+   * test means. A manual clock flushes it instead.
+   *
+   * @type {(() => void) | undefined}
+   */
+  #disarm;
 
   /** When the confirm step became live, so a double-click cannot clear it. */
   #armedAt = 0;
 
   onDestroy() {
-    clearTimeout(this.#timer);
+    this.#disarm?.();
   }
 
   edit() {
@@ -68,20 +77,20 @@ export class RowTools extends SignalElement {
     if (!this.confirming.value) {
       this.confirming.value = true;
       this.#armedAt = Date.now();
-      clearTimeout(this.#timer);
-      this.#timer = setTimeout(() => {
+      this.#disarm?.();
+      this.#disarm = schedule(() => {
         this.confirming.value = false;
       }, 5000);
       return;
     }
     if (Date.now() - this.#armedAt < 300) return;
-    clearTimeout(this.#timer);
+    this.#disarm?.();
     this.confirming.value = false;
     this.#dispatch('remove');
   }
 
   cancel() {
-    clearTimeout(this.#timer);
+    this.#disarm?.();
     this.confirming.value = false;
   }
 

@@ -12,21 +12,25 @@
     "check": "srl check importmap --app web && srl check templates",
     "importmap": "srl check importmap --app web",
     "templates": "srl check templates",
+    "test": "web-test-runner",
+    "test:watch": "web-test-runner --watch",
     "icons": "node tools/dev/icons.mjs",
     "vendor": "node tools/dev/vendor.mjs"
   },
   "dependencies": {
-    "@srljs/core": "0.4.0",
+    "@srljs/core": "0.5.0",
     "dompurify": "3.4.14",
     "marked": "18.0.10"
   },
   "devDependencies": {
-    "@srljs/cli": "^0.4.0",
-    "@tailwindcss/cli": "4.1.11",
+    "@srljs/cli": "0.5.0",
+    "@tailwindcss/cli": "4.3.3",
+    "@types/mocha": "^10.0.10",
     "@types/node": "26.3.0",
+    "@web/test-runner": "^1.0.0",
     "esbuild": "0.28.2",
     "lucide-static": "1.33.0",
     "simple-icons": "16.28.0",
-    "tailwindcss": "4.1.11"
+    "tailwindcss": "4.3.3"
   }
 }

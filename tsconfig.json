@@ -20,7 +20,9 @@
     // `types` is explicit rather than "every @types package installed", so a new
     // dependency cannot quietly widen the global scope of browser code. `node` is
     // here for tools/dev/*.mjs; the cost is that `process` also type-checks inside
-    // web/src, where it does not exist at runtime.
+    // web/src, where it does not exist at runtime. `mocha` is for web/test: the
+    // runner injects describe/it/beforeEach as globals rather than exporting them,
+    // so the declarations are the only way the suites type-check.
     // No `paths` block here, on purpose. It would replace the inherited one wholesale
     // rather than extend it — paths do not merge, and an empty object replaces it
     // with nothing — so `@core/` would stop resolving and every import through it
@@ -28,7 +30,7 @@
     // and `dompurify`, are real packages and resolve through node_modules the
     // ordinary way; the import map points the browser at the copies of those same
     // versions in web/vendor.
-    "types": ["node"]
+    "types": ["node", "mocha"]
   },
   "include": ["web/**/*.js", "tools/**/*.mjs"],
   // web/vendor holds third-party bytes verbatim, copied from node_modules by

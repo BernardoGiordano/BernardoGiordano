@@ -1,5 +1,6 @@
 import { token } from '@core/foundation/inject.js';
 import { signal } from '@core/foundation/reactive.js';
+import { resource } from '@core/foundation/resource.js';
 
 /** @import { ApiClient } from '@core/http/client.js' */
 /** @import { ArtWork } from './types.js' */
@@ -7,30 +8,50 @@ import { signal } from '@core/foundation/reactive.js';
 /** @type {import('@core/foundation/types.js').InjectionToken<ArtService>} */
 export const ART = token('ArtService');
 
+/** What the read is seeded with. Screens bind `rows`, so nothing renders it. */
+/** @type {{ rows: readonly ArtWork[] }} */
+const EMPTY = { rows: [] };
+
 export class ArtService {
   #client;
 
   /** @type {import('@preact/signals-core').Signal<readonly ArtWork[]>} */
   rows = signal([]);
 
-  isLoading = signal(false);
   loaded = signal(false);
+
+  /**
+   * The read, and the only thing that decides which response wins: it aborts the
+   * request in flight, drops a response that arrives for an aborted one, and owns
+   * the two flags below. `rows` stays a signal of this service's own because
+   * create, save and remove write to it with no request of their own behind them
+   * — `resource` is the primitive under a store rather than one itself.
+   */
+  #read = resource((signal) => this.#fetch(signal), { initial: EMPTY });
+
+  isLoading = this.#read.pending;
+  failed = this.#read.failed;
 
   /** @param {ApiClient} client */
   constructor(client) {
     this.#client = client;
   }
 
+  /**
+   * @param {AbortSignal} signal
+   * @returns {Promise<{ rows: readonly ArtWork[] }>}
+   */
+  #fetch(signal) {
+    return this.#client.get('/art', undefined, signal);
+  }
+
   async load() {
-    this.isLoading.value = true;
-    try {
-      /** @type {{ rows: readonly ArtWork[] }} */
-      const body = await this.#client.get('/art');
-      this.rows.value = body.rows;
-      this.loaded.value = true;
-    } finally {
-      this.isLoading.value = false;
-    }
+    const body = await this.#read.reload();
+    // Superseded, aborted or rejected: the request that replaced this one owns
+    // the flags and the rows, so this call writes nothing at all.
+    if (body === undefined) return;
+    this.rows.value = body.rows;
+    this.loaded.value = true;
   }
 
   /** @param {Partial<ArtWork>} work */

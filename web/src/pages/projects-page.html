@@ -15,6 +15,11 @@
 
   <p *if="isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
 
+  <p *if="failed" class="flex flex-wrap items-center gap-3 py-6 text-[13px] text-muted" role="alert">
+    {{ t('site.failed') }}
+    <button type="button" class="btn btn-quiet" (click)="retry()">{{ t('site.retry') }}</button>
+  </p>
+
   <!-- No cards, no borders, no grid. A title at 25px and one muted line of
        facts under the description: the type is the whole layout, and the fading
        rule between two rows is the only graphic on the page. -->
@@ -168,5 +173,5 @@
     </a>
   </div>
 
-  <p *if="!isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('projects.empty') }}</p>
+  <p *if="!isLoading && !failed && !rows.length" class="py-6 text-[13px] text-muted">{{ t('projects.empty') }}</p>
 </section>

@@ -11,6 +11,11 @@
 
   <p *if="isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('site.loading') }}</p>
 
+  <p *if="failed" class="flex flex-wrap items-center gap-3 py-6 text-[13px] text-muted" role="alert">
+    {{ t('site.failed') }}
+    <button type="button" class="btn btn-quiet" (click)="retry()">{{ t('site.retry') }}</button>
+  </p>
+
   <!-- A dated index, not a card grid: the date in the margin, the title, the
        first sentence, and what kind of thing it is. Nothing has a box around it
        because the fading rule between two entries is enough. -->
@@ -54,7 +59,7 @@
     <p class="meta text-ink/50">{{ t('blog.count', { shown: shown, total: total }) }}</p>
   </div>
 
-  <p *if="!isLoading && !rows.length" class="py-6 text-[13px] text-muted">{{ t('blog.empty') }}</p>
+  <p *if="!isLoading && !failed && !rows.length" class="py-6 text-[13px] text-muted">{{ t('blog.empty') }}</p>
 
   <footer *if="tags.length" class="mt-14">
     <hr class="grad-rule" />

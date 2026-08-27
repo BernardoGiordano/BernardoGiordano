@@ -2,6 +2,7 @@ import { SignalElement } from '@core/elements/signal-element.js';
 import { defineComponent } from '@core/elements/component.js';
 import { effect, signal } from '@core/foundation/reactive.js';
 import { inject } from '@core/foundation/inject.js';
+import { resource } from '@core/foundation/resource.js';
 import { navigate, routeParams } from '@core/navigation/router.js';
 import { t } from '@core/localization/i18n.js';
 
@@ -21,17 +22,41 @@ import '../components/md-body.js';
 /** @import { Post } from '../services/types.js' */
 
 export class PostPage extends SignalElement {
-  /** @type {import('@preact/signals-core').Signal<Post | null>} */
-  post = signal(null);
+  /**
+   * The post at this URL, and the three things the template used to keep by hand.
+   * /blog/a to /blog/b is a parameter change rather than a remount, so two reads
+   * can be in the air at once and the slower one used to land last: this page
+   * showed a post the URL did not name. The resource aborts the read it replaces,
+   * drops a response that arrives for an aborted one, and binds the request to
+   * this element's lifetime, so `onDestroy` has nothing to write.
+   *
+   * `pending` starts true, which is what the first paint needs: it happens before
+   * `onMount`, and a page that says nothing there reads as a post with no title.
+   */
+  #post = resource((signal) => inject(BLOG).post(this.#slug, signal), {
+    initial: /** @type {Post | null} */ (null),
+    lifetime: () => this.lifetime,
+  });
 
-  isLoading = signal(true);
-  missing = signal(false);
   editing = signal(false);
   busy = signal(false);
   errorKey = signal('');
 
   /** The route is /blog/:slug, so a parameter change is not a remount. */
   #slug = '';
+
+  get post() {
+    return this.#post.value;
+  }
+
+  get isLoading() {
+    return this.#post.pending;
+  }
+
+  /** A slug nothing answers for. The read rejected and nothing superseded it. */
+  get missing() {
+    return this.#post.failed;
+  }
 
   /**
    * An effect rather than a lifecycle hook: /blog/a to /blog/b re-renders this
@@ -50,27 +75,21 @@ export class PostPage extends SignalElement {
   #fetch(slug) {
     if (slug === '' || slug === this.#slug) return;
     this.#slug = slug;
-
-    this.isLoading.value = true;
-    this.missing.value = false;
     this.editing.value = false;
+    void this.#read();
+  }
 
-    void inject(BLOG)
-      .post(slug)
-      .then((post) => {
-        this.post.value = post;
-        // After the fetch rather than beside it: a slug that 404s is a typed
-        // URL, and counting it would put a row in the table for a post that
-        // does not exist. A draft is not counted either — the backend refuses
-        // one, because the only reader who can open it is its author.
-        inject(VISITS).record('post', post.slug);
-      })
-      .catch(() => {
-        this.missing.value = true;
-      })
-      .finally(() => {
-        this.isLoading.value = false;
-      });
+  /**
+   * `reload()` answers with the post only for the read that was neither
+   * superseded nor rejected, which is the one whose view is on screen.
+   */
+  async #read() {
+    const post = await this.#post.reload();
+    // After the fetch rather than beside it: a slug that 404s is a typed URL, and
+    // counting it would put a row in the table for a post that does not exist. A
+    // draft is not counted either — the backend refuses one, because the only
+    // reader who can open it is its author.
+    if (post !== null && post !== undefined) inject(VISITS).record('post', post.slug);
   }
 
   get canEdit() {
@@ -106,10 +125,14 @@ export class PostPage extends SignalElement {
     const post = /** @type {Post | null} */ (detail);
     this.editing.value = false;
     if (post === null) return;
-    this.post.value = post;
-    if (post.slug === this.#slug) return;
+
+    // The service cached the saved record under its new slug, so this read is a
+    // map lookup rather than a request — and going through the resource is what
+    // keeps the page's one copy of the post in one place.
+    const moved = post.slug !== this.#slug;
     this.#slug = post.slug;
-    navigate(`/blog/${post.slug}`);
+    void this.#post.reload();
+    if (moved) navigate(`/blog/${post.slug}`);
   }
 
   discard() {

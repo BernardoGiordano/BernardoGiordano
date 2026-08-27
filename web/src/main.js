@@ -4,13 +4,9 @@ import { API_CLIENT, ApiClient } from '@core/http/client.js';
 import { AUTH_SESSION, AuthSession } from '@auth/session.js';
 import { sessionFetch } from '@auth/session-fetch.js';
 import { startApplication } from '@core/application/runtime.js';
-import { registerTemplateGlobals } from '@core/template/expression.js';
 
 import { BffCookieTokenStore } from './auth/bff-cookie-store.js';
-import { brandPath, iconPath, isBrand } from './icons.js';
-
-// Re-exported because it is registered below as the `isBrandIcon` template global.
-export { isBrand };
+import { registerAppTemplateGlobals } from './template-globals.js';
 import { ART, ArtService } from './services/art-service.js';
 import { BLOG, BlogService } from './services/blog-service.js';
 import { CONTENT, ContentService } from './services/content-service.js';
@@ -34,24 +30,10 @@ function fastApiCode(status, body) {
   return typeof detail === 'string' ? detail : `http_${String(status)}`;
 }
 
-/**
- * Icons, by bare name in every template. The alternative is an `icon()` method on
- * every component that draws one, which was already four copies of the same three
- * lines.
- *
- * @param {string} name
- * @returns {string}
- */
-export function icon(name) {
-  if (isBrand(name)) return brandPath(name);
-  const path = iconPath(name);
-  return path === '' ? iconPath('link') : path;
-}
-
 await startApplication({
   configure: () => {
     configureTheme({ defaultTheme: 'system' });
-    registerTemplateGlobals({ icon, isBrandIcon: isBrand });
+    registerAppTemplateGlobals();
   },
 
   providers: (manifest) => {

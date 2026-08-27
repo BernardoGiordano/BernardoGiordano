@@ -39,6 +39,15 @@ export class CvPage extends SignalElement {
     return inject(CV).isLoading;
   }
 
+  get failed() {
+    return inject(CV).failed;
+  }
+
+  /** What the failure line's button asks for. */
+  retry() {
+    void inject(CV).load();
+  }
+
   get canEdit() {
     return inject(EDIT_MODE).isOn;
   }

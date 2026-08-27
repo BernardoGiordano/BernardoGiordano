@@ -1,11 +1,23 @@
 import { token } from '@core/foundation/inject.js';
 import { signal } from '@core/foundation/reactive.js';
+import { resource } from '@core/foundation/resource.js';
 
 /** @import { ApiClient } from '@core/http/client.js' */
 /** @import { Profile, SiteLink, SiteTotals } from './types.js' */
 
 /** @type {import('@core/foundation/types.js').InjectionToken<ContentService>} */
 export const CONTENT = token('ContentService');
+
+/**
+ * One request's worth of shell. Nullable where the service's own signals are,
+ * so the read's seed and the three signals it settles into are one shape.
+ *
+ * @typedef {{ profile: Profile | null, links: readonly SiteLink[], totals: SiteTotals | null }} Site
+ */
+
+/** What the read is seeded with. The rail binds the three signals, not this. */
+/** @type {Site} */
+const EMPTY = { profile: null, links: [], totals: null };
 
 /**
  * The shell's data. One request, because the shell is one thing: a profile, the
@@ -24,35 +36,38 @@ export class ContentService {
   /** @type {import('@preact/signals-core').Signal<SiteTotals | null>} */
   totals = signal(null);
 
-  isLoading = signal(false);
+  /**
+   * The read. It replaces a promise this service used to hold so that two callers
+   * would share one request, and the replacement is not merely tidier: the rail
+   * remounts after a sign-in, /site answers differently for a session that can
+   * edit, and joining the request already in flight served the signed-out view to
+   * a signed-in reader. The second call now supersedes the first instead.
+   * art-service.js says why the three signals below are not this resource's value.
+   */
+  #read = resource((signal) => this.#fetch(signal), { initial: EMPTY });
 
-  /** @type {Promise<void> | null} */
-  #pending = null;
+  isLoading = this.#read.pending;
+  failed = this.#read.failed;
 
   /** @param {ApiClient} client */
   constructor(client) {
     this.#client = client;
   }
 
-  /** Idempotent: the rail is mounted once and every page may ask for it. */
-  load() {
-    this.#pending ??= this.#load().finally(() => {
-      this.#pending = null;
-    });
-    return this.#pending;
+  /**
+   * @param {AbortSignal} signal
+   * @returns {Promise<Site>}
+   */
+  #fetch(signal) {
+    return this.#client.get('/site', undefined, signal);
   }
 
-  async #load() {
-    this.isLoading.value = true;
-    try {
-      /** @type {{ profile: Profile, links: readonly SiteLink[], totals: SiteTotals }} */
-      const body = await this.#client.get('/site');
-      this.profile.value = body.profile;
-      this.links.value = body.links;
-      this.totals.value = body.totals;
-    } finally {
-      this.isLoading.value = false;
-    }
+  async load() {
+    const body = await this.#read.reload();
+    if (body === undefined) return;
+    this.profile.value = body.profile;
+    this.links.value = body.links;
+    this.totals.value = body.totals;
   }
 
   /** @param {Partial<Profile>} patch */

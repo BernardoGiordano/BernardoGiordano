@@ -1,5 +1,6 @@
 import { token } from '@core/foundation/inject.js';
 import { signal } from '@core/foundation/reactive.js';
+import { resource } from '@core/foundation/resource.js';
 
 /** @import { ApiClient } from '@core/http/client.js' */
 /** @import { Post, PostSummary } from './types.js' */
@@ -8,6 +9,10 @@ import { signal } from '@core/foundation/reactive.js';
 export const BLOG = token('BlogService');
 
 const PAGE_SIZE = 12;
+
+/** What the read is seeded with. Screens bind `rows`, so nothing renders it. */
+/** @type {{ rows: readonly PostSummary[], total: number, tags: readonly string[] }} */
+const EMPTY = { rows: [], total: 0, tags: [] };
 
 export class BlogService {
   #client;
@@ -19,15 +24,43 @@ export class BlogService {
   tags = signal([]);
 
   total = signal(0);
-  isLoading = signal(false);
   loaded = signal(false);
 
   /** @type {Map<string, Post>} */
   #posts = new Map();
 
+  /**
+   * What the read will send. `load()` sets it immediately before reloading, and
+   * the loader is the only reader: the query and the request that carries it can
+   * never disagree, because nothing runs between the two lines.
+   *
+   * @type {{ tag?: string, offset: number, limit: number }}
+   */
+  #query = { offset: 0, limit: PAGE_SIZE };
+
+  /**
+   * The read, and what makes a tag change safe. /blog and /blog?tag=x are the
+   * same route, so switching chips twice quickly leaves two requests in the air;
+   * without supersession the slower one lands last and the list under a chip is
+   * the list for a different chip. art-service.js says why `rows` is not this
+   * resource's value.
+   */
+  #read = resource((signal) => this.#fetch(signal), { initial: EMPTY });
+
+  isLoading = this.#read.pending;
+  failed = this.#read.failed;
+
   /** @param {ApiClient} client */
   constructor(client) {
     this.#client = client;
+  }
+
+  /**
+   * @param {AbortSignal} signal
+   * @returns {Promise<{ rows: readonly PostSummary[], total: number, tags: readonly string[] }>}
+   */
+  #fetch(signal) {
+    return this.#client.get('/posts', this.#query, signal);
   }
 
   get pageSize() {
@@ -39,25 +72,30 @@ export class BlogService {
    */
   async load(options) {
     const { tag, offset = 0, append = false } = options ?? {};
-    this.isLoading.value = true;
-    try {
-      /** @type {{ rows: readonly PostSummary[], total: number, tags: readonly string[] }} */
-      const body = await this.#client.get('/posts', { tag, offset, limit: PAGE_SIZE });
-      this.rows.value = append ? [...this.rows.value, ...body.rows] : body.rows;
-      this.total.value = body.total;
-      this.tags.value = body.tags;
-      this.loaded.value = true;
-    } finally {
-      this.isLoading.value = false;
-    }
+    this.#query = { tag, offset, limit: PAGE_SIZE };
+
+    const body = await this.#read.reload();
+    // Superseded, aborted or rejected: the request that replaced this one owns
+    // the flags and the rows, so this call writes nothing at all — which is the
+    // whole point, since `append` and `rows` below belong to this call's page.
+    if (body === undefined) return;
+
+    this.rows.value = append ? [...this.rows.value, ...body.rows] : body.rows;
+    this.total.value = body.total;
+    this.tags.value = body.tags;
+    this.loaded.value = true;
   }
 
-  /** @param {string} slug */
-  async post(slug) {
+  /**
+   * @param {string} slug
+   * @param {AbortSignal} [signal] Aborts the request. A cached post ignores it,
+   *   because there is no request to abort.
+   */
+  async post(slug, signal) {
     const cached = this.#posts.get(slug);
     if (cached !== undefined) return cached;
     /** @type {Post} */
-    const post = await this.#client.get(`/posts/${encodeURIComponent(slug)}`);
+    const post = await this.#client.get(`/posts/${encodeURIComponent(slug)}`, undefined, signal);
     this.#posts.set(slug, post);
     return post;
   }

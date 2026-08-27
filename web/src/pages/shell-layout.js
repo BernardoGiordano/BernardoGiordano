@@ -1,6 +1,7 @@
 import { SignalElement } from '@core/elements/signal-element.js';
 import { defineComponent } from '@core/elements/component.js';
 import { effect, signal } from '@core/foundation/reactive.js';
+import { schedule } from '@core/foundation/clock.js';
 import { inject } from '@core/foundation/inject.js';
 import { RouteOutlet, currentPath, navigate } from '@core/navigation/router.js';
 import { setTheme, theme } from '@core/appearance/theme.js';
@@ -27,6 +28,15 @@ const TABS = [
  */
 export class ShellLayout extends SignalElement {
   copied = signal(false);
+
+  /**
+   * Cancels the "copied" flash. Through the library's clock, which is the seam a
+   * suite drives instead of sleeping, and held rather than discarded so a second
+   * copy does not have the first one's timer end its confirmation early.
+   *
+   * @type {(() => void) | undefined}
+   */
+  #unflash;
 
   onMount() {
     // One request for the whole shell, totals included. This used to also load
@@ -168,10 +178,15 @@ export class ShellLayout extends SignalElement {
     if (email === '') return;
     void navigator.clipboard.writeText(email).then(() => {
       this.copied.value = true;
-      setTimeout(() => {
+      this.#unflash?.();
+      this.#unflash = schedule(() => {
         this.copied.value = false;
       }, 1600);
     });
+  }
+
+  onDestroy() {
+    this.#unflash?.();
   }
 
   signOut() {

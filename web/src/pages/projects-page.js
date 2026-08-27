@@ -27,10 +27,11 @@ export class ProjectsPage extends SignalElement {
   errorKey = signal('');
 
   onMount() {
-    // The rail already asks for this list on every page; the guard on
-    // `isLoading` is what keeps landing on /projects from asking twice.
+    // One guard, and it is about data rather than about a request: `isLoading`
+    // starts true now — the resource behind it is pending until the first read
+    // settles — and a second read supersedes the first rather than racing it.
     const projects = inject(PROJECTS);
-    if (!projects.loaded.value && !projects.isLoading.value) void projects.load();
+    if (!projects.loaded.value) void projects.load();
   }
 
   get rows() {
@@ -39,6 +40,15 @@ export class ProjectsPage extends SignalElement {
 
   get isLoading() {
     return inject(PROJECTS).isLoading;
+  }
+
+  get failed() {
+    return inject(PROJECTS).failed;
+  }
+
+  /** What the failure line's button asks for. */
+  retry() {
+    void inject(PROJECTS).load();
   }
 
   get canEdit() {
@@ -67,7 +77,11 @@ export class ProjectsPage extends SignalElement {
     if (project.downloadsOverride !== null) {
       return { count: project.downloadsOverride, source: '', url: '' };
     }
-    const fromRegistry = project.packageStats;
+    // `?? null` rather than a plain read: the static tree and the API are deployed
+    // as two steps, so a page can be newer than the process answering it and a field
+    // the backend has not started sending yet arrives as `undefined`. That is a card
+    // without a downloads chip, not a render that throws and leaves the tab blank.
+    const fromRegistry = project.packageStats ?? null;
     if (fromRegistry !== null && fromRegistry.downloads !== null) {
       return {
         count: fromRegistry.downloads,

@@ -74,6 +74,15 @@ export class ArtPage extends SignalElement {
     return inject(ART).isLoading;
   }
 
+  get failed() {
+    return inject(ART).failed;
+  }
+
+  /** What the failure line's button asks for. */
+  retry() {
+    void inject(ART).load();
+  }
+
   get canEdit() {
     return inject(EDIT_MODE).isOn;
   }

@@ -1,5 +1,6 @@
 import { token } from '@core/foundation/inject.js';
 import { signal } from '@core/foundation/reactive.js';
+import { resource } from '@core/foundation/resource.js';
 
 /** @import { ApiClient } from '@core/http/client.js' */
 /** @import { Project } from './types.js' */
@@ -7,30 +8,42 @@ import { signal } from '@core/foundation/reactive.js';
 /** @type {import('@core/foundation/types.js').InjectionToken<ProjectsService>} */
 export const PROJECTS = token('ProjectsService');
 
+/** What the read is seeded with. Screens bind `rows`, so nothing renders it. */
+/** @type {{ rows: readonly Project[] }} */
+const EMPTY = { rows: [] };
+
 export class ProjectsService {
   #client;
 
   /** @type {import('@preact/signals-core').Signal<readonly Project[]>} */
   rows = signal([]);
 
-  isLoading = signal(false);
   loaded = signal(false);
+
+  /** The read. art-service.js says what this owns and why `rows` is not it. */
+  #read = resource((signal) => this.#fetch(signal), { initial: EMPTY });
+
+  isLoading = this.#read.pending;
+  failed = this.#read.failed;
 
   /** @param {ApiClient} client */
   constructor(client) {
     this.#client = client;
   }
 
+  /**
+   * @param {AbortSignal} signal
+   * @returns {Promise<{ rows: readonly Project[] }>}
+   */
+  #fetch(signal) {
+    return this.#client.get('/projects', undefined, signal);
+  }
+
   async load() {
-    this.isLoading.value = true;
-    try {
-      /** @type {{ rows: readonly Project[] }} */
-      const body = await this.#client.get('/projects');
-      this.rows.value = body.rows;
-      this.loaded.value = true;
-    } finally {
-      this.isLoading.value = false;
-    }
+    const body = await this.#read.reload();
+    if (body === undefined) return;
+    this.rows.value = body.rows;
+    this.loaded.value = true;
   }
 
   /** @param {Partial<Project>} project */
