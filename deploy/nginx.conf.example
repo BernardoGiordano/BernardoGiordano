@@ -1,0 +1,220 @@
+# santella.dev — the static tree plus one Python process. One file: nothing here
+# includes anything but nginx's own mime.types.
+#
+# The one thing worth reading twice is `try_files $uri @app`: a URL that is not a
+# file on disk goes to the application, which returns index.html with the
+# per-URL <title>, description and og: tags injected. Serving index.html
+# statically instead would be faster and would give every page in the site the
+# same social card, which is the whole problem app/seo.py exists to solve.
+#
+# Every location that states a `Cache-Control` is generated, between the two
+# markers at the bottom, by `tools/deploy/nginx.mjs` from `dist/web/artifact.json`
+# — which carries a cache class per emitted file and the header string per class.
+# nginx is the second adapter over that one declaration and used to be written
+# beside it by hand, which is how `/i18n/` kept a location of its own after the
+# build started hashing locale bundles into `/assets/`. `npm run nginx` rewrites
+# the region and the deploy runs `npm run nginx -- --check`, so the edge cannot
+# quietly disagree with the artifact again. Everything above the markers is
+# hand-written and the generator does not touch it.
+#
+# Two kinds of repetition below, and only one of them is avoidable.
+#
+# The proxy settings appear once, at server level, because `proxy_set_header` and
+# friends inherit into every location that does not declare one of its own — and
+# none here does.
+#
+# The four security headers are repeated in every location that sets a header of
+# its own, because `add_header` has the same inheritance rule and almost every
+# location declares a `Cache-Control`: "These directives are inherited from the
+# previous configuration level if and only if there are no add_header directives
+# defined on the current level." One `add_header` in a location therefore silently
+# drops every `add_header` the server block set, which is how HSTS came to be
+# served on /favicon.svg and on no page, stylesheet, script or image on the site.
+# nginx 1.29.3 added `add_header_inherit` for this; until the server is that new,
+# the four lines have to be written out wherever a location sets a header of its
+# own.
+#
+# `.mjs` used to need a location of its own: it is not in the mime.types nginx
+# bundles, so a module served from it arrived as octet-stream and the browser
+# refused to execute it. The bundler emits `.js` for everything it writes,
+# including the two dependencies that ship as `.mjs` upstream, so the extension no
+# longer reaches this server.
+#
+# HTTP/2 is a `listen` parameter and not the `http2 on;` directive. The directive
+# is the current spelling and appeared in nginx 1.25.1; the parameter has worked
+# since 1.9.5 and is merely deprecated in the versions that have the directive.
+# Ubuntu ships 1.18 on 22.04 and 1.24 on 24.04, so the directive is `unknown
+# directive "http2"` on the server this deploys to and the parameter works
+# everywhere. On 1.25.1 or newer this warns but still serves HTTP/2; swap it for
+# `http2 on;` once the server is that new.
+
+upstream santella_api {
+    server 127.0.0.1:8001;
+    keepalive 16;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name santella.dev www.santella.dev;
+    return 301 https://santella.dev$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.santella.dev;
+
+    ssl_certificate     /etc/letsencrypt/live/santella.dev/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/santella.dev/privkey.pem;
+
+    return 301 https://santella.dev$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name santella.dev;
+
+    ssl_certificate     /etc/letsencrypt/live/santella.dev/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/santella.dev/privkey.pem;
+
+    root /home/ubuntu/www/santella.dev;
+
+    client_max_body_size 24m;
+
+    # ── The edge's response headers ───────────────────────────────────────────
+    # Repeated in every location that sets a header of its own. See the top.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options           "DENY" always;
+
+    # ── Reverse proxy, inherited by every location below ──────────────────────
+    # $remote_addr has to reach the application: app/auth.py rate-limits login
+    # attempts per IP, and uvicorn runs with --proxy-headers, so it rebuilds
+    # request.client.host from X-Forwarded-For. Without these headers every
+    # attempt would look like it came from 127.0.0.1 and one visitor could lock
+    # out everybody.
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Connection        "";
+    proxy_read_timeout 30s;
+
+    # The application sets these three itself, because in development it is the
+    # whole stack with no nginx in front of it. Behind nginx that would be two
+    # copies of each, and a duplicated X-Frame-Options is a directive some
+    # browsers resolve by ignoring. Dropping the upstream's copy leaves the block
+    # above as the one place the edge's headers are written. HSTS is not in the
+    # list: the application never sets it, because a process that also answers
+    # plain HTTP in development has no business promising a year of HTTPS.
+    proxy_hide_header X-Content-Type-Options;
+    proxy_hide_header Referrer-Policy;
+    proxy_hide_header X-Frame-Options;
+
+    gzip             on;
+    gzip_min_length  512;
+    gzip_types       text/css text/javascript application/javascript application/json
+                     image/svg+xml application/rss+xml application/xml;
+
+    # Content-addressed filenames, so they can never go stale. Hand-written and
+    # outside the generated region below, because /media/ is the application's
+    # upload tree and not build output — no artifact file describes it — but it is
+    # the same class, so it gets the same one header. `expires 365d` used to sit
+    # beside the `add_header` here and the two together sent two Cache-Control
+    # headers for the browser to reconcile. `^~` for the same reason the generated
+    # prefixes have it: an image under /media/ must not be answered by the
+    # file-shaped-path guard.
+    location ^~ /media/ {
+        alias /home/ubuntu/media/santella.dev/;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+        access_log off;
+    }
+
+    # These five set no Cache-Control of their own, so they inherit the server
+    # block's four security headers — and the application states their cache
+    # policy itself, in app/main.py, because in development it is the whole stack
+    # with no nginx in front of it. One policy, written where the response is.
+    location /api/  { proxy_pass http://santella_api; }
+    location /auth/ { proxy_pass http://santella_api; }
+
+    location = /feed.xml    { proxy_pass http://santella_api; }
+    location = /sitemap.xml { proxy_pass http://santella_api; }
+    location = /robots.txt  { proxy_pass http://santella_api; }
+
+    # ── BEGIN generated by tools/deploy/nginx.mjs ─────────────────────────────
+    # Every Cache-Control below is report.cache[class] verbatim. No `expires`
+    # beside one: that directive writes a Cache-Control of its own, and a location
+    # setting both sends two of them.
+
+    location ^~ /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+        access_log off;
+    }
+
+    location = /app.manifest.json {
+        add_header Cache-Control "private, no-cache";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+    }
+
+    location = /build.json {
+        add_header Cache-Control "private, no-cache";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+    }
+
+    location = /index.html {
+        add_header Cache-Control "private, no-cache";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+    }
+
+    # A file-shaped path that is not on disk is 404, not the shell.
+    location ~* ^/.+\.(?:avif|css|gif|ico|jpe?g|js|json|map|md|mjs|png|svg|txt|wasm|webp|woff2?|xml)$ {
+        try_files $uri =404;
+    }
+
+    # Everything else is a route, and the application answers it with index.html
+    # plus the per-URL title and og: tags app/seo.py injects. Same document, so
+    # the same class the artifact gives index.html.
+    location / {
+        try_files $uri @app;
+    }
+
+    location @app {
+        proxy_pass http://santella_api;
+        # The application sets these four itself, because in development it is the
+        # whole stack with no nginx in front of it, and `add_header` appends to what
+        # the upstream sent rather than replacing it. `proxy_hide_header` has the same
+        # inheritance rule as `add_header`, so naming one here drops the server
+        # block's three and all four have to be written out.
+        proxy_hide_header Cache-Control;
+        proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header Referrer-Policy;
+        proxy_hide_header X-Frame-Options;
+        add_header Cache-Control "private, no-cache" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+    }
+    # ── END generated ─────────────────────────────────────────────────────────
+}
