@@ -22,7 +22,10 @@ def _iso(value):
     return str(value)
 
 
-def profile_json(row) -> dict:
+def profile_json(row, srcset: str = "") -> dict:
+    """`srcset` is passed in rather than looked up here: these functions take a
+    row and return a shape, and a serialiser that reached for a connection would
+    make every caller's query count depend on what it decided to print."""
     return {
         "name": row["name"],
         "headline": row["headline"],
@@ -33,6 +36,7 @@ def profile_json(row) -> dict:
         "available": row["available"],
         "email": row["email"],
         "avatarUrl": row["avatar_url"],
+        "avatarSrcset": srcset,
     }
 
 
@@ -112,7 +116,7 @@ def project_json(row, stats=None, package=None) -> dict:
     }
 
 
-def art_json(row) -> dict:
+def art_json(row, srcset: str = "") -> dict:
     return {
         "id": row["id"],
         "title": row["title"],
@@ -123,6 +127,7 @@ def art_json(row) -> dict:
         "releasedOn": _iso(row["released_on"]),
         "formats": as_list(row["formats"]),
         "coverUrl": row["cover_url"],
+        "coverSrcset": srcset,
         "bandcampAlbumId": row["bandcamp_album_id"],
         "catalogNumber": row["catalog_number"],
         "links": as_list(row["links"]),
@@ -152,7 +157,7 @@ def cv_section_json(row, items) -> dict:
     }
 
 
-def post_json(row, tags, include_body: bool) -> dict:
+def post_json(row, tags, include_body: bool, srcset: str = "") -> dict:
     body = {
         "id": row["id"],
         "slug": row["slug"],
@@ -161,6 +166,7 @@ def post_json(row, tags, include_body: bool) -> dict:
         "publishedOn": _iso(row["published_on"]),
         "tags": tags,
         "coverUrl": row["cover_url"],
+        "coverSrcset": srcset,
         "readingMinutes": row["reading_minutes"],
         "language": row["language"],
         "draft": bool(row["draft"]),

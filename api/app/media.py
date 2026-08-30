@@ -79,8 +79,8 @@ def store(raw: bytes, purpose: str, original_name: str) -> dict:
 
     return {
         "id": media_id,
-        "url": f"{config.MEDIA_URL}/{base}-{widths[-1]}.webp",
-        "srcset": ", ".join(f"{config.MEDIA_URL}/{base}-{w}.webp {w}w" for w in widths),
+        "url": variant_url(base, widths[-1]),
+        "srcset": srcset_of(base, widths),
         "width": image.width,
         "height": image.height,
         "widths": widths,
@@ -90,3 +90,70 @@ def store(raw: bytes, purpose: str, original_name: str) -> dict:
 def _resized(image: Image.Image, width: int) -> Image.Image:
     height = max(1, round(image.height * width / image.width))
     return image.resize((width, height), Image.LANCZOS)
+
+
+# ── reading a stored variant set back ────────────────────────────────────────
+#
+# `store` writes one file per width and records the list in `media.widths`. What
+# a renderer needs is that same list as an `srcset`, and the column is the only
+# honest source for it: the loop stops at the source image's own width, so which
+# variants exist is a property of the upload rather than of `IMAGE_WIDTHS`, and
+# a set derived from the config would name files that were never written the day
+# that tuple changes.
+
+
+def variant_url(base: str, width: int) -> str:
+    return f"{config.MEDIA_URL}/{base}-{width}.webp"
+
+
+def srcset_of(base: str, widths) -> str:
+    return ", ".join(f"{variant_url(base, w)} {w}w" for w in widths)
+
+
+def base_of(url: str) -> str | None:
+    """The `base` behind one variant URL, or None for anything this site did not
+    write — a cover pasted in from elsewhere is a URL and nothing more."""
+    prefix = f"{config.MEDIA_URL}/"
+    if not isinstance(url, str) or not url.startswith(prefix) or not url.endswith(".webp"):
+        return None
+    base, separator, width = url[len(prefix) : -len(".webp")].rpartition("-")
+    if not separator or not base or not width.isdigit():
+        return None
+    return base
+
+
+def srcsets(connection, urls) -> dict:
+    """`{url: srcset}` for those of `urls` that name stored media, in one query.
+
+    A url with a single variant is left out rather than given a one-candidate
+    `srcset`: the attribute would then repeat what `src` already says, and the
+    renderer's `*if` on it is what keeps that out of the markup.
+    """
+    by_base: dict[str, list[str]] = {}
+    for url in urls:
+        base = base_of(url)
+        if base is not None:
+            by_base.setdefault(base, []).append(url)
+    if not by_base:
+        return {}
+
+    placeholders = ", ".join(["%s"] * len(by_base))
+    rows = db.rows(
+        connection,
+        f"SELECT base_path, widths FROM media WHERE base_path IN ({placeholders})",
+        tuple(by_base),
+    )
+
+    found = {}
+    for row in rows:
+        widths = [int(width) for width in db.as_list(row["widths"])]
+        if len(widths) < 2:
+            continue
+        value = srcset_of(row["base_path"], widths)
+        for url in by_base[row["base_path"]]:
+            found[url] = value
+    return found
+
+
+def srcset(connection, url: str) -> str:
+    return srcsets(connection, [url]).get(url, "")

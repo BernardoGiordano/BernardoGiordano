@@ -31,6 +31,13 @@ ADDED_COLUMNS = (
 )
 
 
+# The same, for indexes: `CREATE INDEX` has no `IF NOT EXISTS` either, and a
+# second run would fail on the name rather than pass.
+ADDED_INDEXES = (
+    ("media", "idx_media_base", "(base_path)"),
+)
+
+
 def _apply_added_columns(connection):
     for table, column, definition in ADDED_COLUMNS:
         present = db.one(
@@ -44,6 +51,19 @@ def _apply_added_columns(connection):
             print(f"{table}.{column} added")
 
 
+def _apply_added_indexes(connection):
+    for table, index, columns in ADDED_INDEXES:
+        present = db.one(
+            connection,
+            """SELECT 1 AS found FROM information_schema.statistics
+               WHERE table_schema = DATABASE() AND table_name = %s AND index_name = %s""",
+            (table, index),
+        )
+        if present is None:
+            db.execute(connection, f"CREATE INDEX {index} ON {table} {columns}")
+            print(f"{table}.{index} added")
+
+
 def init_db():
     raw = (Path(__file__).resolve().parents[1] / "schema.sql").read_text("utf-8")
     # Comments come out before the split: a `--` line containing a semicolon
@@ -55,6 +75,7 @@ def init_db():
             for statement in [s.strip() for s in sql.split(";") if s.strip()]:
                 cursor.execute(statement)
         _apply_added_columns(connection)
+        _apply_added_indexes(connection)
     print("schema applied")
 
 

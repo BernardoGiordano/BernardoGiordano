@@ -56,9 +56,15 @@
 
     <!-- A banner, so a crop is the right answer here: it is the one image on the
          page whose shape the layout decides rather than the photograph. -->
+    <!-- The banner is the content column, which the shell caps at 688px: the
+         1060px container less its padding, the 252px rail and the gap between
+         them. Under `lg` the rail is not beside it and the column is the
+         container. -->
     <img
       *if="post?.coverUrl"
       [src]="post?.coverUrl ?? ''"
+      [srcset]="post?.coverSrcset || null"
+      sizes="(min-width: 1060px) 688px, (min-width: 1024px) calc(100vw - 372px), (min-width: 640px) calc(100vw - 64px), calc(100vw - 40px)"
       [alt]="post?.title ?? ''"
       loading="lazy"
       class="mt-9 max-h-[300px] w-full rounded-[var(--site-radius)] object-cover"

@@ -2,7 +2,7 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from .. import auth, db
+from .. import auth, db, media
 from ..auth import require_writer
 from ..models import PostBody, PostPatch, post_json
 
@@ -76,6 +76,7 @@ def list_posts(
             (*params, limit, offset),
         )
         grouped = _tags_for(connection, [row["id"] for row in rows])
+        covers = media.srcsets(connection, [row["cover_url"] for row in rows])
 
         visible = "" if include_drafts else "WHERE p.draft = 0"
         tags = db.rows(
@@ -85,7 +86,10 @@ def list_posts(
         )
 
         return {
-            "rows": [post_json(row, grouped.get(row["id"], []), include_body=False) for row in rows],
+            "rows": [
+                post_json(row, grouped.get(row["id"], []), include_body=False, srcset=covers.get(row["cover_url"], ""))
+                for row in rows
+            ],
             "total": total["n"],
             "tags": [row["tag"] for row in tags],
         }
@@ -104,7 +108,7 @@ def read_post(slug: str, request: Request):
         if row is None or (row["draft"] and not _signed_in(connection, request)):
             raise HTTPException(status_code=404, detail="no_such_post")
         tags = _tags_for(connection, [row["id"]]).get(row["id"], [])
-        return post_json(row, tags, include_body=True)
+        return post_json(row, tags, include_body=True, srcset=media.srcset(connection, row["cover_url"]))
 
 
 def _write_tags(connection, post_id: int, tags):
@@ -130,7 +134,12 @@ def create_post(body: PostBody, request: Request, _=Depends(require_writer)):
         )
         _write_tags(connection, post_id, body.tags)
         row = db.one(connection, "SELECT * FROM posts WHERE id = %s", (post_id,))
-        return post_json(row, sorted({t.strip().lower() for t in body.tags if t.strip()}), include_body=True)
+        return post_json(
+            row,
+            sorted({t.strip().lower() for t in body.tags if t.strip()}),
+            include_body=True,
+            srcset=media.srcset(connection, row["cover_url"]),
+        )
 
 
 @router.put("/{post_id}")
@@ -157,7 +166,7 @@ def update_post(post_id: int, patch: PostPatch, _=Depends(require_writer)):
 
         row = db.one(connection, "SELECT * FROM posts WHERE id = %s", (post_id,))
         tags = _tags_for(connection, [post_id]).get(post_id, [])
-        return post_json(row, tags, include_body=True)
+        return post_json(row, tags, include_body=True, srcset=media.srcset(connection, row["cover_url"]))
 
 
 @router.delete("/{post_id}", status_code=204)

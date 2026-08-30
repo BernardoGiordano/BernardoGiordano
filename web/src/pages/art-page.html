@@ -33,6 +33,8 @@
           <div class="release-frame {{ isPortrait(work) ? 'w-[164px]' : 'w-full sm:w-[220px]' }}">
             <img
               [src]="work.coverUrl"
+              [srcset]="work.coverSrcset || null"
+              [sizes]="isPortrait(work) ? '164px' : '(min-width: 640px) 220px, calc(100vw - 40px)'"
               [alt]="work.title"
               [width]="isPortrait(work) ? 164 : 440"
               [height]="isPortrait(work) ? 220 : 440"

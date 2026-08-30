@@ -7,6 +7,8 @@ export interface Profile {
   now: string;
   available: string;
   avatarUrl: string;
+  /** The `srcset` for `avatarUrl`, or '' where the picture has one variant only. */
+  avatarSrcset: string;
   email: string;
 }
 
@@ -87,6 +89,7 @@ export interface ArtWork {
   releasedOn: string;
   formats: readonly string[];
   coverUrl: string;
+  coverSrcset: string;
   bandcampAlbumId: string;
   catalogNumber: string;
   links: readonly { label: string; url: string }[];
@@ -119,6 +122,7 @@ export interface PostSummary {
   publishedOn: string;
   tags: readonly string[];
   coverUrl: string;
+  coverSrcset: string;
   readingMinutes: number;
   language: string;
   draft: boolean;

@@ -66,7 +66,12 @@ VISIT_WINDOW_HOURS = int(os.environ.get("VISIT_WINDOW_HOURS", "6"))
 VISIT_SALT = os.environ.get("VISIT_SALT") or secrets.token_hex(32)
 
 UPLOAD_MAX_BYTES = int(os.environ.get("UPLOAD_MAX_BYTES", str(20 * 1024 * 1024)))
-IMAGE_WIDTHS = (480, 960, 1600)
+# The ladder every upload is re-encoded down. 240 is here because the smallest
+# box the site renders a picture in is the 60px avatar on a phone, and 480 --
+# which was the floor -- is a desktop asset on that screen. The upper end is the
+# post banner at 2x. Which of these a given upload actually has is recorded per
+# row in `media.widths`, so changing this tuple affects new uploads only.
+IMAGE_WIDTHS = (240, 480, 960, 1600)
 IMAGE_QUALITY = int(os.environ.get("IMAGE_QUALITY", "82"))
 
 # Serving the SPA from this process is the development shape. In production nginx

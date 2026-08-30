@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import db
+from .. import db, media
 from ..auth import require_writer
 from ..models import ArtBody, ArtPatch, art_json
 
@@ -30,7 +30,7 @@ def _one(connection, art_id: int):
     row = db.one(connection, "SELECT * FROM art_works WHERE id = %s", (art_id,))
     if row is None:
         raise HTTPException(status_code=404, detail="no_such_work")
-    return art_json(row)
+    return art_json(row, media.srcset(connection, row["cover_url"]))
 
 
 def _encode(key, value):
@@ -42,7 +42,9 @@ def _encode(key, value):
 @router.get("")
 def list_art():
     with db.connect() as connection:
-        return {"rows": [art_json(row) for row in db.rows(connection, f"SELECT * FROM art_works {ORDER}")]}
+        rows = db.rows(connection, f"SELECT * FROM art_works {ORDER}")
+        sets = media.srcsets(connection, [row["cover_url"] for row in rows])
+        return {"rows": [art_json(row, sets.get(row["cover_url"], "")) for row in rows]}
 
 
 @router.post("", status_code=201)

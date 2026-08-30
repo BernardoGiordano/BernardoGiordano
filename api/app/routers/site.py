@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import db, packages
+from .. import db, media, packages
 from ..auth import require_writer
 from ..models import LinkBody, LinkPatch, ProfilePatch, Reorder, link_json, profile_json, totals_json
 
@@ -37,7 +37,7 @@ def site():
         profile = _profile(connection)
         links = db.rows(connection, "SELECT * FROM links ORDER BY position, id")
         return {
-            "profile": profile_json(profile),
+            "profile": profile_json(profile, media.srcset(connection, profile["avatar_url"])),
             "links": [link_json(row) for row in links],
             "totals": totals_json(packages.site_totals(connection)),
         }
@@ -52,7 +52,8 @@ def update_profile(patch: ProfilePatch, _=Depends(require_writer)):
             values = [fields[key] for key in fields if key in PROFILE_COLUMNS]
             if assignments:
                 db.execute(connection, f"UPDATE profile SET {assignments} WHERE id = 1", values)
-        return profile_json(_profile(connection))
+        row = _profile(connection)
+        return profile_json(row, media.srcset(connection, row["avatar_url"]))
 
 
 @router.post("/links", status_code=201)

@@ -257,7 +257,10 @@ CREATE TABLE IF NOT EXISTS media (
   original_name VARCHAR(255) NOT NULL DEFAULT '',
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_media_digest (digest)
+  UNIQUE KEY uq_media_digest (digest),
+  -- Every renderer of a stored picture reads the variant list back by the base
+  -- path in its URL, so that lookup is the one this table is read by.
+  KEY idx_media_base (base_path)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
 -- What has been looked at, as a counter per thing rather than a row per hit.

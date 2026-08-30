@@ -9,9 +9,16 @@
          and the rail is beside every one of them. -->
     <div class="portrait size-[60px] shrink-0 lg:aspect-square lg:h-auto lg:w-full">
       <div class="size-full bg-surface">
+        <!-- `sizes` is the two boxes above: the rail's own width from `lg`, and
+             the 60px square beside the name below it. Without it the browser
+             assumes the full viewport and picks the largest variant for a
+             thumbnail. `|| null` drops the attribute rather than writing an
+             empty one when the picture has a single variant. -->
         <img
           *if="profile?.avatarUrl"
           [src]="profile?.avatarUrl ?? ''"
+          [srcset]="profile?.avatarSrcset || null"
+          sizes="(min-width: 1024px) 252px, 60px"
           [alt]="profile?.name ?? ''"
           width="296"
           height="296"

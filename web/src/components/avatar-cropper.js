@@ -11,8 +11,14 @@ import { failureKey } from '../forms.js';
 /** The square the picture is cropped to, in CSS pixels. */
 const FRAME = 264;
 
-/** What gets uploaded. The backend re-encodes from here down to its widths. */
-const OUTPUT = 512;
+/**
+ * What gets uploaded. The backend re-encodes from here down to its widths, and
+ * stops at the source's own width -- so this number is the ceiling on how many
+ * variants an avatar can have. At 512 it was one, which is why every avatar was
+ * a single desktop-sized file. 960 is a step on the backend's ladder
+ * (`IMAGE_WIDTHS`) and covers the 252px rail at 2x with room over.
+ */
+const OUTPUT = 960;
 
 const MAX_ZOOM = 4;
 
