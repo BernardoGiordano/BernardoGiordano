@@ -56,6 +56,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The artifact declares a cache class per file and the header string per
+      # class; `deploy/nginx.conf.example` is generated from that declaration by
+      # `npm run nginx`. This is the step that refuses a build whose policy the
+      # committed config no longer states — the drift that left `/i18n/` a
+      # location of its own after locale bundles moved into `/assets/`. It runs
+      # after Build because it reads dist/web/artifact.json.
+      - name: Check the edge's cache policy
+        run: npm run nginx -- --check
+
       # Plain ssh rather than a third-party action: the whole deployment is two
       # rsyncs and one restart, and this way the credential never leaves the job.
       - name: Authorise

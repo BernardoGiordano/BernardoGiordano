@@ -64,6 +64,56 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+# The build declares a Cache-Control for every file it emits and nginx is generated
+# from that declaration. These are the responses no artifact describes — /api,
+# /auth, the three SEO files and, in development, the shell and the upload tree —
+# and until now they declared nothing at all, which left every one of them to a
+# browser heuristic. They are stated here rather than in nginx because in
+# development this process is the whole stack with no nginx in front of it, and
+# because a policy belongs with the response it describes. The edge hides the
+# upstream's copy on the one path where it states its own.
+#
+# /api reads are cached for a minute, not `no-store`: the numbers behind them come
+# from a poller that refreshes on the order of hours, so a read that is one minute
+# behind is already the shape of the data. `private` and `Vary: Cookie` because the
+# same URL answers differently for the signed-in owner — GET /api/posts includes
+# drafts and GET /api/visits is owner-only — so signing in or out must miss the
+# cache rather than reuse the other answer.
+API_READ = "private, max-age=60"
+NO_STORE = "no-store"
+FEED = "public, max-age=3600"
+ROBOTS = "public, max-age=86400"
+DOCUMENT = "private, no-cache"
+IMMUTABLE = "public, max-age=31536000, immutable"
+
+
+def cache_control(path: str, method: str) -> tuple[str, bool]:
+    """The header for one response, and whether it varies by cookie."""
+    if path.startswith("/auth/"):
+        return NO_STORE, False
+    if path.startswith("/api/"):
+        if method in ("GET", "HEAD"):
+            return API_READ, True
+        return NO_STORE, False
+    if path in ("/feed.xml", "/sitemap.xml"):
+        return FEED, False
+    if path == "/robots.txt":
+        return ROBOTS, False
+    if path.startswith(f"{config.MEDIA_URL}/"):
+        return IMMUTABLE, False
+    return DOCUMENT, False
+
+
+@app.middleware("http")
+async def cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    value, by_cookie = cache_control(request.url.path, request.method)
+    response.headers.setdefault("Cache-Control", value)
+    if by_cookie:
+        response.headers.setdefault("Vary", "Cookie")
+    return response
+
+
 @app.get("/feed.xml")
 def rss():
     return Response(seo.feed(), media_type="application/rss+xml; charset=utf-8")
