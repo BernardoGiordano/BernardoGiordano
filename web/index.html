@@ -9,12 +9,12 @@
     <link rel="alternate" type="application/rss+xml" title="Bernardo Giordano" href="/feed.xml" />
 
     <!-- Inter is the design's identity: one family for headings and body, with
-         hierarchy carried by size and space rather than by a second face. The
-         stack in site.css falls back to the platform sans, so a blocked or slow
-         font request costs the look and not the layout. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+         hierarchy carried by size and space rather than by a second face. It is
+         served from this origin: site.css declares the @font-face over the two
+         woff2 files in web/fonts/, so there is no cross-origin stylesheet to
+         fetch before the font itself can be discovered. The stack in site.css
+         falls back to the platform sans, so a blocked or slow font request
+         costs the look and not the layout. -->
 
     <link rel="stylesheet" href="/components/style.css" />
     <link rel="stylesheet" href="/components/theme-default.css" />

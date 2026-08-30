@@ -159,6 +159,43 @@
 
    8px, not 2px: Nocturne's radius scale is soft, and the density is 0.70×. */
 
+/* Inter is served from this origin, not from Google's two. The stylesheet at
+   fonts.googleapis.com was render-blocking and cross-origin, and the woff2 it
+   named was on a second host that could not be discovered until that CSS had
+   been fetched and parsed — one family, two connections, two serial hops, and
+   a document the artifact's own `default-src 'self'` would have blocked.
+
+   One variable file instead of three static weights: the weight axis covers
+   400, 500 and 600 from 48 KB, where the three static cuts were 72 KB and
+   three requests. `latin-ext` is a second face only in the sense that a
+   browser fetches it when a codepoint needs it; Italian and English are both
+   inside `latin`, so on this site it stays unfetched.
+
+   `swap` because the stack below ends in the platform sans: text is readable
+   from first paint and reflows into Inter when it lands, which is what the
+   Google request asked for too. Refresh both files with `npm run vendor`. */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/inter-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/inter-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   --site-font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --site-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;

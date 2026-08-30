@@ -1,0 +1,23 @@
+{
+  "note": "Self-hosted so the one webfont on the site is a same-origin asset the build hashes into /assets/ like everything else, rather than two cross-origin hops the emitted CSP forbids. Refresh with tools/dev/vendor.mjs.",
+  "package": "@fontsource-variable/inter",
+  "version": "5.3.0",
+  "license": "OFL-1.1",
+  "files": {
+    "inter-latin-wght-normal.woff2": {
+      "from": "node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
+      "bytes": 48256,
+      "integrity": "sha384-l0ql7Q1zqvX5klAVRwYjcMVCkCxg5dMTdghsIlC3pYkX6wwEHerh2bP/4yAao3Im"
+    },
+    "inter-latin-ext-wght-normal.woff2": {
+      "from": "node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2",
+      "bytes": 85068,
+      "integrity": "sha384-r0EoKgCx3XyQjhJdTJ6FDE+8mEZrV95dM7cWvqLDUVdqzM44cq76qdOaYiA3sebS"
+    },
+    "LICENSE": {
+      "from": "node_modules/@fontsource-variable/inter/LICENSE",
+      "bytes": 4477,
+      "integrity": "sha384-kj3ws+qnzjazxsLTzPAVaXquIFuyNRYVaSXX024NG79Z2vDskAWFDhnsJYazAo0C"
+    }
+  }
+}
