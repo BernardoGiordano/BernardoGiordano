@@ -6,16 +6,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from . import config, packages, seo
+from . import config, db, packages, seo
 from .routers import art, cv, posts, projects, session, site, upload, visits
 
 log = logging.getLogger("santella")
 
-SPA_PATHS = ("/projects", "/art", "/cv", "/blog")
-
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
+    await asyncio.to_thread(_warm_the_pool)
     poller = asyncio.create_task(_poll_forever())
     try:
         yield
@@ -23,6 +22,18 @@ async def lifespan(app: FastAPI):
         poller.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await poller
+
+
+def _warm_the_pool():
+    """Build the pool here rather than leaving it to whoever asks first. It opens
+    `mincached` connections when it is built, and building it on the first request
+    means that request waits for them — which is the handshake this is meant to
+    keep out of the first visitor's page. A database that is not up yet is not
+    fatal: `db.pool()` is still lazy, so the first request builds it as before."""
+    try:
+        db.pool()
+    except Exception:
+        log.exception("could not open the connection pool at startup")
 
 
 async def _poll_forever():
@@ -144,8 +155,7 @@ if config.WEB_ROOT is not None:
         if path and candidate.is_file() and candidate.is_relative_to(config.WEB_ROOT):
             return FileResponse(candidate)
 
-        index = config.WEB_ROOT / "index.html"
         return Response(
-            seo.render_shell(index.read_text("utf-8"), request.url.path),
+            seo.shell(config.WEB_ROOT / "index.html", request.url.path),
             media_type="text/html; charset=utf-8",
         )

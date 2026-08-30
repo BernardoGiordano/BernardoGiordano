@@ -2,7 +2,7 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from .. import auth, db, media
+from .. import auth, db, media, seo
 from ..auth import require_writer
 from ..models import PostBody, PostPatch, post_json
 
@@ -118,6 +118,10 @@ def _write_tags(connection, post_id: int, tags):
         db.many(connection, "INSERT INTO post_tags (post_id, tag) VALUES (%s, %s)", [(post_id, tag) for tag in cleaned])
 
 
+# A post is the title, the description and the og:image of /blog/<slug>, and that
+# document is rendered once and kept, so all three writes below end by dropping
+# what was rendered before them. After the commit rather than inside it, so a
+# render racing the write cannot store the rows it is replacing.
 @router.post("", status_code=201)
 def create_post(body: PostBody, request: Request, _=Depends(require_writer)):
     with db.connect() as connection:
@@ -134,12 +138,15 @@ def create_post(body: PostBody, request: Request, _=Depends(require_writer)):
         )
         _write_tags(connection, post_id, body.tags)
         row = db.one(connection, "SELECT * FROM posts WHERE id = %s", (post_id,))
-        return post_json(
+        answer = post_json(
             row,
             sorted({t.strip().lower() for t in body.tags if t.strip()}),
             include_body=True,
             srcset=media.srcset(connection, row["cover_url"]),
         )
+
+    seo.forget_shells()
+    return answer
 
 
 @router.put("/{post_id}")
@@ -166,10 +173,15 @@ def update_post(post_id: int, patch: PostPatch, _=Depends(require_writer)):
 
         row = db.one(connection, "SELECT * FROM posts WHERE id = %s", (post_id,))
         tags = _tags_for(connection, [post_id]).get(post_id, [])
-        return post_json(row, tags, include_body=True, srcset=media.srcset(connection, row["cover_url"]))
+        answer = post_json(row, tags, include_body=True, srcset=media.srcset(connection, row["cover_url"]))
+
+    seo.forget_shells()
+    return answer
 
 
 @router.delete("/{post_id}", status_code=204)
 def delete_post(post_id: int, _=Depends(require_writer)):
     with db.connect() as connection:
         db.execute(connection, "DELETE FROM posts WHERE id = %s", (post_id,))
+
+    seo.forget_shells()

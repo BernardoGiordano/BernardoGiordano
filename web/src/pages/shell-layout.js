@@ -23,6 +23,19 @@ const TABS = [
 ];
 
 /**
+ * How long the section counter waits before it is sent.
+ *
+ * POST /api/visits is a transactional write of up to five statements, against
+ * the same eight-connection pool as the reads this page cannot paint without,
+ * and nothing on the page reads its answer. Sent from the mount effect it
+ * competed with /api/site and /api/projects for a connection inside the
+ * first-paint window; a second later it competes with nothing. The service is
+ * fire and forget by design, so the delay is not observable — and a reader who
+ * leaves a section inside that second was not a page view worth the contention.
+ */
+const COUNT_DELAY_MS = 1000;
+
+/**
  * The frame: a rail that does not move and a column that does. It is a layout
  * route, so both survive every tab change and only /login renders without them.
  */
@@ -50,8 +63,14 @@ export class ShellLayout extends SignalElement {
     // would count the tab the site was opened on and nothing after it. The
     // service sends each section once per page session, so this fires again only
     // for a section not yet visited.
+    //
+    // The tab is read in the effect body and the request is not: the read is
+    // what subscribes to the path signal, and the write has no business in the
+    // first paint. The timer's cancel is the effect's cleanup, so a section left
+    // inside COUNT_DELAY_MS is not counted and the one settled on is.
     const stop = effect(() => {
-      inject(VISITS).record('tab', this.activeTab);
+      const tab = this.activeTab;
+      return schedule(() => inject(VISITS).record('tab', tab), COUNT_DELAY_MS);
     });
     this.lifetime.addEventListener('abort', stop);
   }

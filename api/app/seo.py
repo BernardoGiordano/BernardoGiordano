@@ -1,7 +1,10 @@
 import html
 import re
+import threading
+from collections import OrderedDict
 from datetime import datetime, timezone
 from email.utils import format_datetime
+from pathlib import Path
 from xml.sax.saxutils import escape
 
 from . import config, db
@@ -79,6 +82,82 @@ def render_shell(shell: str, path: str) -> str:
         count=1,
     )
     return shell.replace("</head>", f"  {_meta(title, description, url, image)}\n  </head>", 1)
+
+
+# The rendered shell, kept rather than rebuilt.
+#
+# It is a pure function of three things: the bytes of index.html, the URL, and
+# the rows `describe` reads. The first changes on deploy, the third when the
+# owner edits their profile or a post, and the second is a small set — four
+# sections plus one path per published post. Every navigation used to pay a disk
+# read and a profile query for a document that had not changed since the last
+# one, at the head of a chain everything else on the page waits behind.
+#
+# Bounded and LRU because the catch-all answers every URL that is not a file, so
+# the key set is whatever anyone asks for and not only what the site links to. A
+# sweep of invented paths evicts, it does not grow.
+_SHELL_LIMIT = 256
+
+# Guards the three below together. Endpoints are sync `def`, so FastAPI runs them
+# in a worker thread and two readers really are concurrent here.
+_lock = threading.Lock()
+
+# What was read from disk, and the (mtime, size) it was read at. A deploy rsyncs
+# a new index.html and restarts this process, so the stamp is not what makes
+# production correct — development, where the file changes under a running
+# server, is.
+_source = ""
+_stamp = None
+
+# Bumped by `forget_shells`. A render that started before a write must not store
+# what it read before it, so a result is kept only if the generation it began in
+# is still current.
+_generation = 0
+
+_shells = OrderedDict()
+
+
+def forget_shells() -> None:
+    """Drop every rendered document. Called by the endpoints that write the rows
+    `describe` reads — the profile and the posts — because a title the owner just
+    changed must not keep being served from before they did."""
+    global _generation
+    with _lock:
+        _generation += 1
+        _shells.clear()
+
+
+def shell(index: Path, path: str) -> str:
+    """The document one URL is answered with: `render_shell` at most once per
+    (build, edit, URL), and a dict lookup for every request after that."""
+    global _source, _stamp
+
+    info = index.stat()
+    stamp = (info.st_mtime_ns, info.st_size)
+
+    with _lock:
+        if stamp != _stamp:
+            _source = index.read_text("utf-8")
+            _stamp = stamp
+            _shells.clear()
+        source = _source
+        generation = _generation
+        rendered = _shells.get(path)
+        if rendered is not None:
+            _shells.move_to_end(path)
+            return rendered
+
+    # Outside the lock: this is the query, and two readers racing the same cold
+    # path is one wasted render rather than one blocking the other.
+    rendered = render_shell(source, path)
+
+    with _lock:
+        if generation == _generation and stamp == _stamp:
+            _shells[path] = rendered
+            _shells.move_to_end(path)
+            while len(_shells) > _SHELL_LIMIT:
+                _shells.popitem(last=False)
+    return rendered
 
 
 def _absolute(url: str) -> str:

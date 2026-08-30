@@ -19,7 +19,14 @@ def pool():
         _pool = PooledDB(
             creator=pymysql,
             maxconnections=8,
-            mincached=0,
+            # Two connections opened when the pool is built rather than none. The
+            # pool used to start empty, so the first request after a restart paid
+            # a TCP connect and a MySQL handshake before its first statement, and
+            # `main.lifespan` builds the pool at startup so those two are already
+            # open when the first visitor arrives. Two and not eight because idle
+            # connections cost the server something and the pool grows to
+            # maxconnections on demand anyway.
+            mincached=2,
             blocking=True,
             ping=1,
             autocommit=False,

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import db, media, packages
+from .. import db, media, packages, seo
 from ..auth import require_writer
 from ..models import LinkBody, LinkPatch, ProfilePatch, Reorder, link_json, profile_json, totals_json
 
@@ -53,7 +53,14 @@ def update_profile(patch: ProfilePatch, _=Depends(require_writer)):
             if assignments:
                 db.execute(connection, f"UPDATE profile SET {assignments} WHERE id = 1", values)
         row = _profile(connection)
-        return profile_json(row, media.srcset(connection, row["avatar_url"]))
+        answer = profile_json(row, media.srcset(connection, row["avatar_url"]))
+
+    # The name and the headline are the shell document's title and description on
+    # every URL, and that document is rendered once and kept. Editing the profile
+    # is the one write that changes all of them at once. After the commit, so a
+    # render racing this one cannot repopulate the cache from the old rows.
+    seo.forget_shells()
+    return answer
 
 
 @router.post("/links", status_code=201)
