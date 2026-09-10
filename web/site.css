@@ -1034,6 +1034,31 @@ html:has(.img-viewer[open]) {
   color: var(--site-veil-ink-strong);
 }
 
+/* ── A new build is on the origin ─────────────────────────────────────────
+   Bottom of the viewport rather than the top: the site's own header is up
+   there, and a bar that pushes the page down moves the line somebody is
+   reading. Above the image viewer's veil is deliberately not wanted, so no
+   z-index of its own. */
+
+.build-notice {
+  align-items: center;
+  background: var(--ui-color-surface-raised);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--site-radius);
+  bottom: 16px;
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--ui-color-text) 12%, transparent);
+  color: var(--ui-color-text);
+  display: flex;
+  font-size: 13px;
+  gap: 12px;
+  inset-inline: 16px;
+  justify-content: center;
+  margin-inline: auto;
+  padding: 10px 14px;
+  position: fixed;
+  width: fit-content;
+}
+
 /* ── Editing ──────────────────────────────────────────────────────────────
    The editors are six forms with the same field, the same label and the same
    error paragraph in every one of them, and `ui-field` takes its classes as

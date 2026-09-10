@@ -25,7 +25,9 @@
     "loading": "Loading",
     "failed": "Could not load this. Try again.",
     "retry": "Retry",
-    "close": "Close"
+    "close": "Close",
+    "updated": "A new version of this site is available.",
+    "reload": "Reload"
   },
   "nav": {
     "projects": "Projects",

@@ -4,6 +4,7 @@ import { API_CLIENT, ApiClient } from '@core/http/client.js';
 import { AUTH_SESSION, AuthSession } from '@auth/session.js';
 import { sessionFetch } from '@auth/session-fetch.js';
 import { startApplication } from '@core/application/runtime.js';
+import { registerServiceWorker } from '@core/application/worker.js';
 
 import { BffCookieTokenStore } from './auth/bff-cookie-store.js';
 import { registerAppTemplateGlobals } from './template-globals.js';
@@ -56,3 +57,13 @@ await startApplication({
 
   root: { load: () => import('./app-root.js').then((m) => m.AppRoot) },
 });
+
+/* After the first view is on screen rather than in front of it: the worker the
+   build generates pays off on the second load, and installing it costs a request
+   of its own. It precaches the entry closure and nothing beyond it, so a route
+   chunk is still fetched the first time it is needed.
+
+   Unconditional because the call already answers for the cases where there is no
+   worker to install. A dev origin serves no /sw.js, and it returns null there
+   instead of failing a boot that has otherwise succeeded. */
+void registerServiceWorker();

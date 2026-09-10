@@ -187,6 +187,14 @@ server {
         add_header X-Frame-Options           "DENY" always;
     }
 
+    location = /sw.js {
+        add_header Cache-Control "private, no-cache";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options           "DENY" always;
+    }
+
     # A file-shaped path that is not on disk is 404, not the shell.
     location ~* ^/.+\.(?:avif|css|gif|ico|jpe?g|js|json|map|md|mjs|png|svg|txt|wasm|webp|woff2?|xml)$ {
         try_files $uri =404;
