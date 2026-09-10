@@ -1,6 +1,6 @@
 <!-- Announced rather than taken: a reload throws away whatever is half-written in
      an editor, and only the visitor knows whether that matters. -->
-<div *if="updated" class="build-notice" role="status">
+<div *if="newBuild" class="build-notice" role="status">
   <span>{{ t('site.updated') }}</span>
   <button type="button" class="btn btn-primary" (click)="reload()">{{ t('site.reload') }}</button>
 </div>

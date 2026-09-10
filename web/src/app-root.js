@@ -9,8 +9,11 @@ export class AppRoot extends SignalElement {
   /**
    * True once the origin serves a different build than this tab loaded. It never
    * goes back to false: the tab cannot become less stale by being asked again.
+   *
+   * Not `updated`, which is Lit's post-render callback: a field of that name is
+   * called with the changed properties on every render and is not a function.
    */
-  updated = releaseChanged;
+  newBuild = releaseChanged;
 
   /** @type {(() => void) | undefined} */
   #stopWatching;
