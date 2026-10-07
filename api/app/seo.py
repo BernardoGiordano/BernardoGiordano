@@ -7,7 +7,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import config, db
+from . import config, db, media
 
 # A client-rendered page has no <title> a crawler can read and no description a
 # social card can quote. Rather than server-render the body, this injects the four
@@ -16,6 +16,15 @@ from . import config, db
 
 TITLE = re.compile(r"<title>.*?</title>", re.S)
 DESCRIPTION = re.compile(r'<meta name="description" content=".*?"\s*/?>', re.S)
+
+
+def _absolute(url: str) -> str:
+    """A path the site serves, as an address a reader can fetch. A feed and a
+    social card are both read away from this site, so a bare `/media/…` in either
+    resolves against the reader's host, or against nothing for a scraper."""
+    if url == "" or url.startswith(("http://", "https://")):
+        return url
+    return f"{config.SITE_ORIGIN}{url}"
 
 
 def _meta(title: str, description: str, url: str, image: str | None) -> str:
@@ -74,6 +83,8 @@ def describe(path: str) -> tuple[str, str, str | None]:
 def render_shell(shell: str, path: str) -> str:
     title, description, image = describe(path)
     url = f"{config.SITE_ORIGIN}{path}"
+    if image:
+        image = _absolute(media.shareable(image))
 
     shell = TITLE.sub(f"<title>{html.escape(title)}</title>", shell, count=1)
     shell = DESCRIPTION.sub(
@@ -158,15 +169,6 @@ def shell(index: Path, path: str) -> str:
             while len(_shells) > _SHELL_LIMIT:
                 _shells.popitem(last=False)
     return rendered
-
-
-def _absolute(url: str) -> str:
-    """A path the site serves, as an address a reader can fetch. A feed is read
-    somewhere else by definition, so `/media/…` in it resolves against whatever
-    host the reader happens to be on."""
-    if url == "" or url.startswith(("http://", "https://")):
-        return url
-    return f"{config.SITE_ORIGIN}{url}"
 
 
 def _element(name: str, value) -> str:

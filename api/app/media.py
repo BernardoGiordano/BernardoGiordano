@@ -1,5 +1,7 @@
 import hashlib
 import io
+import os
+import uuid
 from datetime import datetime, timezone
 
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -157,3 +159,49 @@ def srcsets(connection, urls) -> dict:
 
 def srcset(connection, url: str) -> str:
     return srcsets(connection, [url]).get(url, "")
+
+
+# ── a copy for link previews ─────────────────────────────────────────────────
+#
+# The site serves WebP, and some link-preview scrapers still cannot decode it. A
+# social card names a JPEG of the same variant instead, written beside the WebP
+# the first time a page asks for it. The WebP is content-addressed, so the copy
+# never goes stale and nginx serves it under the same immutable header.
+
+
+def shareable(url: str) -> str:
+    """A JPEG twin of one stored WebP variant, or a PNG when the picture has
+    transparency. libwebp drops an alpha plane that is fully opaque, so a decoded
+    alpha band means real transparency that JPEG would flatten.
+
+    Anything this site did not write comes back unchanged, and so does a variant
+    whose file cannot be read, because a WebP card is better than no card."""
+    if base_of(url) is None:
+        return url
+    stem = url[len(config.MEDIA_URL) + 1 : -len(".webp")]
+    source = (config.MEDIA_ROOT / f"{stem}.webp").resolve()
+    if not source.is_relative_to(config.MEDIA_ROOT):
+        return url
+
+    for suffix in (".jpg", ".png"):
+        if source.with_suffix(suffix).is_file():
+            return f"{config.MEDIA_URL}/{stem}{suffix}"
+
+    # Written under a private name and renamed into place, so nginx never serves
+    # a half-written file to a scraper that arrives mid-encode.
+    temporary = None
+    try:
+        with Image.open(source) as image:
+            transparent = "A" in image.getbands()
+            target = source.with_suffix(".png" if transparent else ".jpg")
+            temporary = target.with_name(f".{target.name}.{uuid.uuid4().hex}")
+            if transparent:
+                image.save(temporary, "PNG", optimize=True)
+            else:
+                image.convert("RGB").save(temporary, "JPEG", quality=88, optimize=True, progressive=True)
+        os.replace(temporary, target)
+    except (UnidentifiedImageError, OSError):
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+        return url
+    return f"{config.MEDIA_URL}/{stem}{target.suffix}"
