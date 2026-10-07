@@ -78,7 +78,7 @@ export function iconPath(name) {
  * @returns {string}
  */
 export function brandPath(name) {
-  return BRAND_ICONS[name] ?? UI_ICONS.link;
+  return BRAND_ICONS[name] ?? UI_ICONS.link ?? '';
 }
 
 /**

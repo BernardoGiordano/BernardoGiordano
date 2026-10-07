@@ -1,6 +1,6 @@
-import { token } from '@core/foundation/inject.js';
+import { token } from '@srljs/core';
 
-/** @import { AuthSession } from '@auth/session.js' */
+/** @import { AuthSession } from '@srljs/core' */
 
 /** @type {import('@core/foundation/types.js').InjectionToken<MediaService>} */
 export const MEDIA = token('MediaService');

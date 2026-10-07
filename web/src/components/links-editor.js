@@ -1,8 +1,4 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
-import { inject } from '@core/foundation/inject.js';
-import { t } from '@core/localization/i18n.js';
+import { SignalElement, defineComponent, signal, inject, t } from '@srljs/core';
 
 import { LinkForm } from './link-form.js';
 import { RowTools } from './row-tools.js';

@@ -1,7 +1,4 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { navigate } from '@core/navigation/router.js';
-import { t } from '@core/localization/i18n.js';
+import { SignalElement, defineComponent, navigate, t } from '@srljs/core';
 
 import { PostEditor } from '../components/post-editor.js';
 

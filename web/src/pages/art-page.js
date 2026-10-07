@@ -1,10 +1,12 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
-import { inject } from '@core/foundation/inject.js';
-import { t } from '@core/localization/i18n.js';
-import { resolvedTheme } from '@core/appearance/theme.js';
-import { bypassSecurityTrustResourceUrl } from '@core/template/security.js';
+import {
+  SignalElement,
+  defineComponent,
+  signal,
+  inject,
+  t,
+  resolvedTheme,
+  bypassSecurityTrustResourceUrl,
+} from '@srljs/core';
 
 import { ART } from '../services/art-service.js';
 import { EDIT_MODE } from '../services/edit-mode.js';

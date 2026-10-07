@@ -62,7 +62,7 @@ function fromOrigin(data) {
   const match = /^m\s*(-?[\d.]+)[\s,]+(-?[\d.]+)(.*)$/su.exec(data.trim());
   if (match === null) return data.trim();
   const [, x, y, rest] = match;
-  const tail = rest.trimStart();
+  const tail = (rest ?? '').trimStart();
   if (tail === '') return `M${x} ${y}`;
   return /^[-+.\d]/u.test(tail) ? `M${x} ${y}l${tail}` : `M${x} ${y}${tail}`;
 }
@@ -74,10 +74,10 @@ function fromOrigin(data) {
 function toPathData(nodes) {
   return nodes
     .map(([tag, attrs]) => {
-      if (tag === 'path') return attrs.d;
+      if (tag === 'path') return attrs.d ?? '';
       if (tag === 'line') return `M${attrs.x1} ${attrs.y1}L${attrs.x2} ${attrs.y2}`;
       if (tag === 'polyline' || tag === 'polygon') {
-        const points = attrs.points.trim().split(/[\s,]+/u);
+        const points = (attrs.points ?? '').trim().split(/[\s,]+/u);
         const pairs = [];
         for (let i = 0; i < points.length; i += 2) pairs.push(`${points[i]} ${points[i + 1]}`);
         return `M${pairs.join('L')}${tag === 'polygon' ? 'Z' : ''}`;

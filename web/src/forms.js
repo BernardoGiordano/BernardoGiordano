@@ -1,5 +1,5 @@
 import { nothing } from 'lit';
-import { ApiError } from '@core/http/client.js';
+import { ApiError } from '@srljs/core';
 
 /**
  * A comma-separated line, as a list. What the editors use for the short list

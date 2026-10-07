@@ -9,9 +9,9 @@
     "start": "srl serve --app web --open --proxy /api/=http://127.0.0.1:8001 --proxy /auth/=http://127.0.0.1:8001 --proxy /media/=http://127.0.0.1:8001 --proxy /feed.xml=http://127.0.0.1:8001 --proxy /sitemap.xml=http://127.0.0.1:8001 --proxy /robots.txt=http://127.0.0.1:8001",
     "serve": "srl serve --app web --proxy /api/=http://127.0.0.1:8001 --proxy /auth/=http://127.0.0.1:8001 --proxy /media/=http://127.0.0.1:8001 --proxy /feed.xml=http://127.0.0.1:8001 --proxy /sitemap.xml=http://127.0.0.1:8001 --proxy /robots.txt=http://127.0.0.1:8001",
     "build": "srl build --app web",
-    "check": "srl check importmap --app web && srl check templates",
+    "check": "srl check --app web",
     "importmap": "srl check importmap --app web",
-    "templates": "srl check templates",
+    "templates": "srl check templates --app web",
     "test": "web-test-runner",
     "test:watch": "web-test-runner --watch",
     "icons": "node tools/dev/icons.mjs",
@@ -19,13 +19,13 @@
     "nginx": "node tools/deploy/nginx.mjs"
   },
   "dependencies": {
-    "@srljs/core": "0.8.0",
+    "@srljs/core": "1.0.0",
     "dompurify": "3.4.14",
     "marked": "18.0.10"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "5.3.0",
-    "@srljs/cli": "0.8.0",
+    "@srljs/cli": "1.0.0",
     "@tailwindcss/cli": "4.3.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "26.3.0",

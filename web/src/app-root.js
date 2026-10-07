@@ -1,7 +1,10 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { attachRouter } from '@core/navigation/router.js';
-import { releaseChanged, watchRelease } from '@core/application/release.js';
+import {
+  SignalElement,
+  defineComponent,
+  attachRouter,
+  releaseChanged,
+  watchRelease,
+} from '@srljs/core';
 
 import { createRoutes } from './routes.js';
 

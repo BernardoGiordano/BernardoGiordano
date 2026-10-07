@@ -1,4 +1,4 @@
-import { registerTemplateGlobals } from '@core/template/expression.js';
+import { registerTemplateGlobals } from '@srljs/core';
 
 import { brandPath, iconPath, isBrand } from './icons.js';
 

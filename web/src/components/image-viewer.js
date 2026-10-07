@@ -17,7 +17,7 @@
  * the fifty-image posts are the ones this exists for.
  */
 
-import { t } from '@core/localization/i18n.js';
+import { t } from '@srljs/core';
 
 import { iconPath } from '../icons.js';
 

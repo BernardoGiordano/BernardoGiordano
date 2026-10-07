@@ -1,5 +1,4 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
+import { SignalElement, defineComponent } from '@srljs/core';
 
 export class NotFoundPage extends SignalElement {}
 

@@ -1,5 +1,6 @@
 import {
   AuthRejected,
+  AuthUnavailable,
   asRecord,
   failureFor,
   readPayload,
@@ -8,7 +9,7 @@ import {
   requireStrings,
   sessionFrom,
   unreachable,
-} from '@auth/session-policy.js';
+} from '@srljs/core';
 
 /** @import { Session, TokenStore } from '@auth/types.js' */
 
@@ -48,7 +49,7 @@ export class BffCookieTokenStore {
       this.#csrfToken = null;
       return null;
     }
-    if (!response.ok) throw await failureFor(response, where);
+    if (!response.ok) throw this.#fail(await failureFor(response, where));
     return this.#read(response, where);
   }
 
@@ -74,18 +75,25 @@ export class BffCookieTokenStore {
     );
 
     if (response.status === 401 || response.status === 403) {
-      throw new AuthRejected(`${where} rejected the credentials.`);
+      throw this.#fail(new AuthRejected(`${where} rejected the credentials.`));
     }
-    if (!response.ok) throw await failureFor(response, where);
+    if (!response.ok) throw this.#fail(await failureFor(response, where));
     return this.#read(response, where);
   }
 
+  /**
+   * Rejects unless the backend confirms, because a cookie it never cleared
+   * restores the session on the next load, and the owner should hear that.
+   */
   async logout() {
     this.#csrfToken = null;
-    await fetch(`${this.#baseUrl}/login`, {
-      method: 'DELETE',
-      credentials: 'same-origin',
-    }).catch(() => undefined);
+    const where = `The logout endpoint ${this.#baseUrl}/login`;
+    const response = await this.#send(
+      `${this.#baseUrl}/login`,
+      { method: 'DELETE', credentials: 'same-origin' },
+      where,
+    );
+    if (!response.ok) throw await failureFor(response, where);
   }
 
   /** @returns {Promise<Session | null>} */
@@ -120,30 +128,57 @@ export class BffCookieTokenStore {
   }
 
   /**
+   * The failure to raise, with the CSRF token dropped unless the failure is
+   * transient. `AuthSession` ends the session on a refused or unadmissible
+   * answer, and a token kept past that would go on marking writes for a session
+   * that has ended. An unreachable or 5xx backend decides nothing, so the
+   * session and its token stay.
+   *
+   * @param {AuthRejected | AuthUnavailable} failure
+   * @returns {AuthRejected | AuthUnavailable}
+   */
+  #fail(failure) {
+    if (!(failure instanceof AuthUnavailable)) this.#csrfToken = null;
+    return failure;
+  }
+
+  /**
+   * The session a payload describes. The CSRF token changes only after the
+   * whole payload is admitted, and a payload that fails admission drops it.
+   *
    * @param {Response} response
    * @param {string} where
    * @returns {Promise<Session>}
    */
   async #read(response, where) {
-    const payload = asRecord(await readPayload(response, where), where);
+    try {
+      const payload = asRecord(await readPayload(response, where), where);
 
-    // A `/session` probe need not reissue the CSRF token. Keeping the one we hold
-    // when the field is absent is what makes a probe a probe rather than
-    // something that can silently disarm every later write.
-    if (payload.csrfToken !== undefined) {
-      this.#csrfToken = requireString(payload.csrfToken, `${where}: csrfToken`);
+      // A `/session` probe need not reissue the CSRF token. Keeping the one we
+      // hold when the field is absent is what makes a probe a probe rather than
+      // something that can silently disarm every later write.
+      const csrfToken =
+        payload.csrfToken === undefined
+          ? this.#csrfToken
+          : requireString(payload.csrfToken, `${where}: csrfToken`);
+
+      // The expiry arrives as an absolute instant rather than a lifetime,
+      // because the backend owns the token and the browser holds none to time.
+      const session = sessionFrom(
+        {
+          subject: payload.sub,
+          name: payload.name,
+          scopes: payload.scopes === undefined ? [] : requireStrings(payload.scopes, `${where}: scopes`),
+          expiresAt: requireInstant(payload.expiresAt, `${where}: expiresAt`),
+        },
+        where,
+      );
+
+      this.#csrfToken = csrfToken;
+      return session;
+    } catch (cause) {
+      if (!(cause instanceof AuthUnavailable)) this.#csrfToken = null;
+      throw cause;
     }
-
-    // The expiry arrives as an absolute instant rather than a lifetime, because
-    // the backend owns the token and the browser holds none to time.
-    return sessionFrom(
-      {
-        subject: payload.sub,
-        name: payload.name,
-        scopes: payload.scopes === undefined ? [] : requireStrings(payload.scopes, `${where}: scopes`),
-        expiresAt: requireInstant(payload.expiresAt, `${where}: expiresAt`),
-      },
-      where,
-    );
   }
 }

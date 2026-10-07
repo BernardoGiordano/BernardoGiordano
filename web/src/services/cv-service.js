@@ -1,8 +1,6 @@
-import { token } from '@core/foundation/inject.js';
-import { signal } from '@core/foundation/reactive.js';
-import { resource } from '@core/foundation/resource.js';
+import { token, signal, resource } from '@srljs/core';
 
-/** @import { ApiClient } from '@core/http/client.js' */
+/** @import { ApiClient } from '@srljs/core' */
 /** @import { CvItem, CvSection } from './types.js' */
 
 /** @type {import('@core/foundation/types.js').InjectionToken<CvService>} */

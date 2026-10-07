@@ -1,9 +1,13 @@
-import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
-import { inject } from '@core/foundation/inject.js';
-import { field } from '@core/forms/field.js';
-import { group } from '@core/forms/group.js';
-import { email, maxLength, required } from '@core/forms/validators.js';
+import {
+  defineComponent,
+  signal,
+  inject,
+  field,
+  group,
+  email,
+  maxLength,
+  required,
+} from '@srljs/core';
 import { UiField } from '@components/inputs/ui-field.js';
 
 import { EditorElement } from './editor-element.js';

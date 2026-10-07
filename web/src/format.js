@@ -1,4 +1,4 @@
-import { locale, t } from '@core/localization/i18n.js';
+import { locale, t } from '@srljs/core';
 
 /**
  * @param {string | null | undefined} iso
@@ -72,7 +72,7 @@ export function compactNumber(value) {
  */
 const VANITY_SUBDOMAIN = /^([\w-]+)\.(bandcamp\.com|tumblr\.com|substack\.com|itch\.io)$/u;
 
-/** Hosts whose handles are written with a leading @. */
+/** Hosts whose handles are written with a leading at sign. */
 const AT_HOSTS = new Set(['instagram.com', 'threads.net', 'x.com', 'twitter.com', 'tiktok.com']);
 
 /** Hosts whose handles are written bare. */
@@ -111,7 +111,7 @@ export function socialHandle(url) {
   const parts = parsed.pathname.split('/').filter((part) => part !== '');
 
   const vanity = VANITY_SUBDOMAIN.exec(host);
-  if (vanity !== null) return vanity[1];
+  if (vanity !== null) return vanity[1] ?? '';
 
   if (parts.length === 0) return '';
 
@@ -136,7 +136,7 @@ export function socialHandle(url) {
   // the name after the dot is the one worth reading.
   if (host === 'goodreads.com') {
     const slug = /^\d+\.(.+)$/u.exec(parts.at(-1) ?? '');
-    return slug === null ? '' : slug[1].replaceAll('_', ' ');
+    return slug?.[1]?.replaceAll('_', ' ') ?? '';
   }
 
   // Last, and only for hosts named nowhere above: Mastodon and the rest of the

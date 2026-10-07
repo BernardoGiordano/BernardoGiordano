@@ -1,11 +1,9 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { signal } from '@core/foundation/reactive.js';
-import { t } from '@core/localization/i18n.js';
+import { SignalElement, signal, t } from '@srljs/core';
 import { focusInvalidField } from '@components/inputs/ui-field.js';
 
 import { failureKey } from '../forms.js';
 
-/** @import { FormGroup } from '@core/forms/group.js' */
+/** @import { FormGroup } from '@srljs/core' */
 
 /**
  * What the five editors on this site do identically: refuse a submit that has an

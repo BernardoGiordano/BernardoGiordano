@@ -1,5 +1,4 @@
-// See blog-service.test.js for why the harness is imported by a relative path.
-import { assert, mount, settled, unmountAll } from '../../node_modules/@srljs/core/lib/test/harness.js';
+import { assert, mount, settled, unmountAll } from '@srljs/core/testing/harness.js';
 
 import { registerAppTemplateGlobals } from '../src/template-globals.js';
 import { AppRoot } from '../src/app-root.js';

@@ -15,7 +15,7 @@
  * it.
  */
 
-import { t } from '@core/localization/i18n.js';
+import { t } from '@srljs/core';
 
 import { collectedFootnotes, footnotes } from './md-footnotes.js';
 import { openImageViewer } from './image-viewer.js';
@@ -89,7 +89,7 @@ function loadRenderer() {
         // the requirement, not a preference. `collectedFootnotes` reads state
         // this parse filled in, and the next call into `marked` clears it.
         const body = /** @type {string} */ (marked.parse(markdown));
-        return purify.sanitize(body + endnotes((note) => marked.parseInline(note)), {
+        return purify.sanitize(body + endnotes((note) => /** @type {string} */ (marked.parseInline(note))), {
           ALLOWED_TAGS,
           ALLOWED_ATTR,
           ALLOW_DATA_ATTR: false,
@@ -248,7 +248,7 @@ export class MdBody extends HTMLElement {
 
       const figures = images.map((image) => this.#toFigure(image));
       if (figures.length === 1) {
-        paragraph.replaceWith(figures[0]);
+        paragraph.replaceWith(/** @type {HTMLElement} */ (figures[0]));
         continue;
       }
 

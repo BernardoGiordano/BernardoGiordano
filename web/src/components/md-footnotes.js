@@ -103,7 +103,7 @@ export const footnotes = {
       tokenizer(source) {
         const match = DEFINITION.exec(source);
         if (match === null) return undefined;
-        definitions.set(match[1], dedent(match[2]));
+        definitions.set(match[1] ?? '', dedent(match[2] ?? ''));
         // The definition is not printed where it was written. It is printed at
         // the foot of the post, by whoever asked for the render.
         return { type: 'footnoteDefinition', raw: match[0], tokens: [] };
@@ -126,9 +126,9 @@ export const footnotes = {
         if (match === null) return undefined;
         return { type: 'footnoteReference', raw: match[0], text: match[1], tokens: [] };
       },
-      /** @param {{ text: string }} token */
+      /** @param {import('marked').Tokens.Generic} token */
       renderer(token) {
-        const label = token.text;
+        const label = /** @type {string} */ (token.text);
         if (!definitions.has(label)) return escape(`[^${label}]`);
         if (!referenced.includes(label)) referenced.push(label);
         return `<sup class="md-fn-ref">${referenced.indexOf(label) + 1}</sup>`;

@@ -1,12 +1,18 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { effect, signal } from '@core/foundation/reactive.js';
-import { schedule } from '@core/foundation/clock.js';
-import { inject } from '@core/foundation/inject.js';
-import { RouteOutlet, currentPath, navigate } from '@core/navigation/router.js';
-import { setTheme, theme } from '@core/appearance/theme.js';
-import { AUTH_SESSION } from '@auth/session.js';
-import { t } from '@core/localization/i18n.js';
+import {
+  SignalElement,
+  defineComponent,
+  effect,
+  signal,
+  schedule,
+  inject,
+  RouteOutlet,
+  currentPath,
+  navigate,
+  setTheme,
+  theme,
+  AUTH_SESSION,
+  t,
+} from '@srljs/core';
 
 import { CONTENT } from '../services/content-service.js';
 import { compactNumber, socialHandle } from '../format.js';
@@ -14,6 +20,14 @@ import { EDIT_MODE } from '../services/edit-mode.js';
 import { VISITS } from '../services/visits-service.js';
 import { LinksEditor } from '../components/links-editor.js';
 import { ProfileCard } from '../components/profile-card.js';
+
+/** @import { ThemePreference } from '@core/appearance/types.js' */
+
+/** @type {ReadonlyArray<ThemePreference>} */
+const THEME_ORDER = ['system', 'light', 'dark'];
+
+/** @type {Readonly<Record<string, string>>} */
+const THEME_ICONS = { light: 'sun', dark: 'moon', system: 'monitor' };
 
 const TABS = [
   { key: 'projects', path: '/projects' },
@@ -179,13 +193,12 @@ export class ShellLayout extends SignalElement {
   }
 
   toggleTheme() {
-    const order = /** @type {const} */ (['system', 'light', 'dark']);
-    const next = order[(order.indexOf(theme.value) + 1) % order.length];
-    setTheme(next);
+    const next = THEME_ORDER[(THEME_ORDER.indexOf(theme.value) + 1) % THEME_ORDER.length];
+    setTheme(next ?? 'system');
   }
 
   get themeIcon() {
-    return { light: 'sun', dark: 'moon', system: 'monitor' }[this.themeName] ?? 'monitor';
+    return THEME_ICONS[this.themeName] ?? 'monitor';
   }
 
   toggleEditing() {
@@ -210,9 +223,11 @@ export class ShellLayout extends SignalElement {
 
   signOut() {
     inject(EDIT_MODE).off();
+    // Local state is gone either way. A failed revocation still rejects, so
+    // the page's error reporting names it.
     void inject(AUTH_SESSION)
       .logout()
-      .then(() => navigate('/projects'));
+      .finally(() => navigate('/projects'));
   }
 
   get isSignedIn() {

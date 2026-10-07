@@ -1,10 +1,15 @@
-import { inject, provide } from '@core/foundation/inject.js';
-import { configureTheme } from '@core/appearance/theme.js';
-import { API_CLIENT, ApiClient } from '@core/http/client.js';
-import { AUTH_SESSION, AuthSession } from '@auth/session.js';
-import { sessionFetch } from '@auth/session-fetch.js';
-import { startApplication } from '@core/application/runtime.js';
-import { registerServiceWorker } from '@core/application/worker.js';
+import {
+  inject,
+  provide,
+  configureTheme,
+  API_CLIENT,
+  ApiClient,
+  AUTH_SESSION,
+  AuthSession,
+  sessionFetch,
+  startApplication,
+  registerServiceWorker,
+} from '@srljs/core';
 
 import { BffCookieTokenStore } from './auth/bff-cookie-store.js';
 import { registerAppTemplateGlobals } from './template-globals.js';
@@ -39,7 +44,14 @@ await startApplication({
 
   providers: (manifest) => {
     provide(AUTH_SESSION, () => new AuthSession(new BffCookieTokenStore('/auth')));
-    provide(API_CLIENT, () => new ApiClient(manifest.auth.apiBaseUrl, { fetch: sessionFetch, errorCode: fastApiCode }));
+
+    // Every service below calls the API, so a manifest without one is a broken
+    // deploy rather than a site with no data.
+    const apiBaseUrl = manifest.auth?.apiBaseUrl;
+    if (apiBaseUrl === undefined) {
+      throw new Error('app.manifest.json has no auth.apiBaseUrl, and every service here calls the API.');
+    }
+    provide(API_CLIENT, () => new ApiClient(apiBaseUrl, { fetch: sessionFetch, errorCode: fastApiCode }));
 
     provide(CONTENT, () => new ContentService(inject(API_CLIENT)));
     provide(PROJECTS, () => new ProjectsService(inject(API_CLIENT)));

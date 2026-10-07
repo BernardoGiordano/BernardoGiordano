@@ -1,10 +1,7 @@
-// Relative rather than through the `/lib/` mount the application uses, because
-// this specifier has to mean the same file to two resolvers: the browser serving
-// the repository root, and tsc type-checking this suite from disk.
-import { assert } from '../../node_modules/@srljs/core/lib/test/harness.js';
+import { assert } from '@srljs/core/testing/harness.js';
 import { BlogService } from '../src/services/blog-service.js';
 
-/** @import { ApiClient } from '@core/http/client.js' */
+/** @import { ApiClient } from '@srljs/core' */
 /** @import { PostSummary } from '../src/services/types.js' */
 
 /**

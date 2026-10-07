@@ -1,7 +1,6 @@
-import { token } from '@core/foundation/inject.js';
-import { computed, signal } from '@core/foundation/reactive.js';
+import { token, computed, signal } from '@srljs/core';
 
-/** @import { AuthSession } from '@auth/session.js' */
+/** @import { AuthSession } from '@srljs/core' */
 
 /** @type {import('@core/foundation/types.js').InjectionToken<EditMode>} */
 export const EDIT_MODE = token('EditMode');

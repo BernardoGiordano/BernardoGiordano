@@ -1,6 +1,6 @@
 {
+  "$schema": "../node_modules/@srljs/core/lib/core/remotes/app.manifest.schema.json",
   "$comment": "Runtime configuration, fetched on every load with cache: no-cache.",
-  "remotes": [],
   "i18n": {
     "defaultLocale": "en",
     "supportedLocales": ["en"],

@@ -1,7 +1,6 @@
-import { token } from '@core/foundation/inject.js';
-import { signal } from '@core/foundation/reactive.js';
+import { token, signal } from '@srljs/core';
 
-/** @import { ApiClient } from '@core/http/client.js' */
+/** @import { ApiClient } from '@srljs/core' */
 
 /** @type {import('@core/foundation/types.js').InjectionToken<VisitsService>} */
 export const VISITS = token('VisitsService');

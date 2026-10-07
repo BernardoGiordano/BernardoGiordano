@@ -1,10 +1,12 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
-import { inject } from '@core/foundation/inject.js';
-import { navigate } from '@core/navigation/router.js';
-import { t } from '@core/localization/i18n.js';
-import { AUTH_SESSION } from '@auth/session.js';
+import {
+  SignalElement,
+  defineComponent,
+  signal,
+  inject,
+  navigate,
+  t,
+  AUTH_SESSION,
+} from '@srljs/core';
 
 export class LoginPage extends SignalElement {
   errorKey = signal('');

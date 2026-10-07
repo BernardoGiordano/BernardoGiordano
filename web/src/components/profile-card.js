@@ -1,7 +1,4 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
-import { inject } from '@core/foundation/inject.js';
+import { SignalElement, defineComponent, signal, inject } from '@srljs/core';
 
 import { CONTENT } from '../services/content-service.js';
 import { EDIT_MODE } from '../services/edit-mode.js';
@@ -24,7 +21,7 @@ export class ProfileCard extends SignalElement {
       .split(/\s+/u)
       .filter((part) => part !== '')
       .slice(0, 2)
-      .map((part) => part[0].toUpperCase())
+      .map((part) => part.charAt(0).toUpperCase())
       .join('');
   }
 

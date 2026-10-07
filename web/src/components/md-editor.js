@@ -1,8 +1,4 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { peek, signal } from '@core/foundation/reactive.js';
-import { inject } from '@core/foundation/inject.js';
-import { t } from '@core/localization/i18n.js';
+import { SignalElement, defineComponent, peek, signal, inject, t } from '@srljs/core';
 
 import { MEDIA } from '../services/media-service.js';
 import { attr, failureKey } from '../forms.js';

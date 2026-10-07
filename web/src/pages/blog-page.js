@@ -1,9 +1,12 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { inject } from '@core/foundation/inject.js';
-import { effect, signal } from '@core/foundation/reactive.js';
-import { queryParams } from '@core/navigation/router.js';
-import { t } from '@core/localization/i18n.js';
+import {
+  SignalElement,
+  defineComponent,
+  inject,
+  effect,
+  signal,
+  queryParams,
+  t,
+} from '@srljs/core';
 
 import { BLOG } from '../services/blog-service.js';
 import { EDIT_MODE } from '../services/edit-mode.js';

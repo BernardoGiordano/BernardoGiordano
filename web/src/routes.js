@@ -1,6 +1,4 @@
-import { inject } from '@core/foundation/inject.js';
-import { guard } from '@core/navigation/router.js';
-import { AUTH_SESSION } from '@auth/session.js';
+import { inject, guard, AUTH_SESSION } from '@srljs/core';
 
 import { LoginPage } from './pages/login-page.js';
 import { NotFoundPage } from './pages/not-found-page.js';

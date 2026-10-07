@@ -1,8 +1,7 @@
-// See blog-service.test.js for why the harness is imported by a relative path.
-import { assert } from '../../node_modules/@srljs/core/lib/test/harness.js';
+import { assert } from '@srljs/core/testing/harness.js';
 import { ContentService } from '../src/services/content-service.js';
 
-/** @import { ApiClient } from '@core/http/client.js' */
+/** @import { ApiClient } from '@srljs/core' */
 
 /**
  * @returns {{ calls: Array<{ signal: AbortSignal | undefined, resolve: (body: unknown) => void, reject: (cause: unknown) => void }>, client: ApiClient }}

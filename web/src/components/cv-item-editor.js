@@ -1,8 +1,4 @@
-import { defineComponent } from '@core/elements/component.js';
-import { inject } from '@core/foundation/inject.js';
-import { field } from '@core/forms/field.js';
-import { group } from '@core/forms/group.js';
-import { maxLength } from '@core/forms/validators.js';
+import { defineComponent, inject, field, group, maxLength } from '@srljs/core';
 import { UiField } from '@components/inputs/ui-field.js';
 
 import { EditorElement } from './editor-element.js';

@@ -1,8 +1,4 @@
-import { SignalElement } from '@core/elements/signal-element.js';
-import { defineComponent } from '@core/elements/component.js';
-import { signal } from '@core/foundation/reactive.js';
-import { schedule } from '@core/foundation/clock.js';
-import { t } from '@core/localization/i18n.js';
+import { SignalElement, defineComponent, signal, schedule, t } from '@srljs/core';
 
 /**
  * Edit, move, delete: the four controls every editable row on this site has, and

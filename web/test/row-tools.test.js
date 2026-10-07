@@ -1,6 +1,5 @@
-// See blog-service.test.js for why the harness is imported by a relative path.
-import { assert, mount, settled, unmountAll } from '../../node_modules/@srljs/core/lib/test/harness.js';
-import { configureClock, createManualClock } from '@core/foundation/clock.js';
+import { assert, mount, settled, unmountAll } from '@srljs/core/testing/harness.js';
+import { configureClock, createManualClock } from '@srljs/core';
 
 import { registerAppTemplateGlobals } from '../src/template-globals.js';
 import { RowTools } from '../src/components/row-tools.js';
