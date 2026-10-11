@@ -1,8 +1,5 @@
 @import 'tailwindcss';
 
-/* The browser JIT compiles what it finds in the document and never reads this
-   file; the CLI reads this file and never sees index.html's inline block. Two
-   modes, two entry points, the same tokens. */
 @source '../index.html';
 @source './**/*.{js,html}';
 
@@ -11,7 +8,10 @@
    chosen theme. Point the variant at the attribute instead. */
 @custom-variant dark ([data-theme='dark'] &);
 
-@theme inline {
+/* `static` emits every token, used or not. The build checks the compiled
+   stylesheet for the collection's `--ui-color-canvas`, and no utility here
+   draws with `canvas`. */
+@theme static inline {
   --color-canvas: var(--ui-color-canvas);
   --color-surface: var(--ui-color-surface);
   --color-surface-raised: var(--ui-color-surface-raised);
