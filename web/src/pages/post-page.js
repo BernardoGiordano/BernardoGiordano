@@ -15,7 +15,6 @@ import { EDIT_MODE } from '../services/edit-mode.js';
 import { VISITS } from '../services/visits-service.js';
 import { PostEditor } from '../components/post-editor.js';
 import { RowTools } from '../components/row-tools.js';
-import { fullDate } from '../format.js';
 import { failureKey } from '../forms.js';
 // Imported for the side effect, and absent from `uses` below: md-body owns its
 // own children so it cannot be a srl component, whose template would wipe them
@@ -102,11 +101,6 @@ export class PostPage extends SignalElement {
 
   get errorMessage() {
     return this.errorKey.value === '' ? '' : t(this.errorKey.value);
-  }
-
-  /** @param {string} iso */
-  date(iso) {
-    return fullDate(iso);
   }
 
   open() {

@@ -10,7 +10,6 @@ import {
 
 import { BLOG } from '../services/blog-service.js';
 import { EDIT_MODE } from '../services/edit-mode.js';
-import { shortDate } from '../format.js';
 
 /** Thirty tags is five rows of chips, which is why they are at the foot of the
  * page and why only twelve of them show until asked. */
@@ -102,11 +101,6 @@ export class BlogPage extends SignalElement {
 
   get hasMore() {
     return this.rows.value.length < this.total.value;
-  }
-
-  /** @param {string} iso */
-  date(iso) {
-    return shortDate(iso);
   }
 
   /**

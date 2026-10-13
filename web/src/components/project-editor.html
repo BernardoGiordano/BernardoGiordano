@@ -108,7 +108,7 @@
         [.field]="form.fields.packageRegistry"
       >
         <select class="edit-input">
-          <option *for="option of registries; key: option" [value]="option">{{ t(registryLabel(option)) }}</option>
+          <option *for="option of registries; key: option" [value]="option">{{ option | registryLabel | t }}</option>
         </select>
       </ui-field>
 
@@ -134,7 +134,7 @@
         [.field]="form.fields.role"
       >
         <select class="edit-input">
-          <option *for="option of roles; key: option" [value]="option">{{ t(roleLabel(option)) }}</option>
+          <option *for="option of roles; key: option" [value]="option">{{ option | roleLabel | t }}</option>
         </select>
       </ui-field>
 
@@ -146,7 +146,7 @@
         [.field]="form.fields.status"
       >
         <select class="edit-input">
-          <option *for="option of statuses; key: option" [value]="option">{{ t(statusLabel(option)) }}</option>
+          <option *for="option of statuses; key: option" [value]="option">{{ option | statusLabel | t }}</option>
         </select>
       </ui-field>
     </div>

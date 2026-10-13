@@ -33,7 +33,7 @@
         <h1 class="display text-[30px] text-ink sm:text-[38px]">{{ post?.title ?? '' }}</h1>
 
         <p class="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink/52">
-          <span>{{ date(post?.publishedOn ?? '') }}</span>
+          <span>{{ post?.publishedOn | fullDate }}</span>
           <span *if="post?.readingMinutes">·</span>
           <span *if="post?.readingMinutes">
             {{ t('blog.readingTime', { count: post?.readingMinutes ?? 0 }) }}

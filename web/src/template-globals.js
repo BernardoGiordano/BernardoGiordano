@@ -1,11 +1,12 @@
 import { registerTemplateGlobals } from '@srljs/core';
 
+import { fullDate, shortDate } from './format.js';
 import { brandPath, iconPath, isBrand } from './icons.js';
 
 // Re-exported because `srl check templates` types a template global as the export
 // of the module that registers it: `isBrandIcon` is `isBrand`, so this module has
 // to offer the name it hands over.
-export { isBrand };
+export { fullDate, isBrand, shortDate };
 
 /**
  * Icons, by bare name in every template. The alternative is an `icon()` method on
@@ -32,5 +33,5 @@ export function icon(name) {
  * from the templates it feeds.
  */
 export function registerAppTemplateGlobals() {
-  registerTemplateGlobals({ icon, isBrandIcon: isBrand });
+  registerTemplateGlobals({ icon, isBrandIcon: isBrand, fullDate, shortDate });
 }
